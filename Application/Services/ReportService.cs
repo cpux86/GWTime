@@ -9,6 +9,7 @@ using Application.DTOs;
 using Application.Interfaces;
 using Domain;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace Application.Services
 {
@@ -96,30 +97,61 @@ namespace Application.Services
         //}
 
 
-        public async Task<List<WorkTime>> GetReportByReaders(DateTime startDate, DateTime endDate, List<int> inputReader, List<int> outputReader)
+        public async Task<Report> GetReportByReaders(DateTime startDate, DateTime endDate, List<int> inputReader, List<int> outputReader)
         {
 
             var u = await _dbContext.Users
                 //.Where(u=>u.FullName == "Каськов Владимир Васильевич")
-                .Where(u=>u.Group == "Техническая служба")
+                //.Where(u=>usr.Contains(u.Id))
+                //.Where(u=>u.Group == "Техническая служба")
+                .AsNoTracking()
                 .Include(u => u.Events!
                     .Where(e => e.DateTime >= startDate && e.DateTime <= endDate)
                     .Where(e => e.EventCode == 2)
                     .Where(e => inputReader.Contains(e.ReaderId) || outputReader.Contains(e.ReaderId))
-                    .OrderBy(e=>e.DateTime)).ThenInclude(e=>e.Reader)
-
-                //.Where(e => e..DateTime >= startDate && e.DateTime <= endDate)
+                    .OrderBy(e => e.DateTime)).ThenInclude(e => e.Reader)
+                
                 .ToListAsync(CancellationToken.None);
-            //var lis = u.Find(e => e.Id == 5)?.GetWorkList(inputReader, outputReader);
-            //u.ForEach(e=>e.GetWorkList(inputReader,outputReader));
 
-            var list1 = new List<object>();
+            var report = new Report();
+            report.Start = startDate;
+            report.End = endDate;
 
             foreach (var user in u)
             {
-                list1.Add(user.GetWorkList(inputReader, outputReader));
+                if (user.Events != null && !user.Events.Any()) { continue; }
+
+                var worker = new Worker();
+                worker.FullName = user.FullName;
+                worker.Group = user.Group;
+                worker.Name = user.Name;
+                
+                var pre = new Event();
+                foreach (var evt in user.Events)
+                {
+                    var v = new WorkTime();
+                    if (inputReader.Exists(x => x == pre.ReaderId) && outputReader.Exists(x => x == evt.ReaderId))
+                    {
+                        v.EntryTime = pre.DateTime;
+                        v.ExitTime = evt.DateTime;
+                        v.FirstReader = pre.Reader.Name;
+                        v.LastReader = evt.Reader.Name;
+                        worker.WorkTimes.Add(v);
+                        //Console.WriteLine($"{v.FirstReader} - {v.LastReader} {v.Tot}");
+                    }
+
+                    pre = evt;
+                }
+
+
+                report.Workers.Add(worker);
+
             }
 
+            // var list1 = u.Select(user => user.GetWorkList(inputReader, outputReader)).Where(wtList => wtList.Count > 0).Cast<object>().ToList();
+            var test = report.Workers.OrderBy(e => e.FullName).ThenBy(e=>e.Group).ToList<Worker>();
+            report.Workers = test;
+            return report;
 
 
             var events = await _dbContext.Events
@@ -177,8 +209,8 @@ namespace Application.Services
                 preEvent = current;
             }
 
-            return wt;
-            //return list;
+            //return wt;
+           // return list;
         }
     }
 }

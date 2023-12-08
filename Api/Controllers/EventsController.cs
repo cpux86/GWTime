@@ -85,7 +85,7 @@ namespace Api.Controllers
 
         [HttpGet]
         [Route("report")]
-        public async Task<List<WorkTime>> GetReportByReaders(DateTime startDate, DateTime endDate, [FromQuery]List<int> inputReader, [FromQuery]List<int> outputReader)
+        public async Task<Report> GetReportByReaders(DateTime startDate, DateTime endDate, [FromQuery]List<int> inputReader, [FromQuery]List<int> outputReader)
         {
             return await _reportService.GetReportByReaders(startDate, endDate, inputReader, outputReader);
         }

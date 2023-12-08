@@ -13,21 +13,23 @@ namespace Application.DTOs
     {
         public DateTime Start { get; set; }
         public DateTime End { get; set; }
-        public List<Worker> Workers{ get; set; }
+
+        public List<Worker> Workers { get; set; } = new List<Worker>();
     }
 
     public class Worker
     {
         public string Key { get; set; } = string.Empty;
-        public string Name { get; set; }
-        public string FullName { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
+        public string? Group { get; set; } = string.Empty;
         // общее время 
-        public string TotalTime { get; set; }
-        public List<WorkTime> WorkTimes { get; set; }
+        public string TotalTime => WorkTimes.Sum(e => e.Total.TotalHours).ToString();
+        public List<WorkTime> WorkTimes { get; set; } = new List<WorkTime>();
 
         public void AddTime(WorkTime workTime)
         {
-
+           
         }
     }
 
@@ -40,14 +42,16 @@ namespace Application.DTOs
         // время выхода
         [JsonPropertyName("t2")]
         public DateTime ExitTime { get; set; }
+
         // устройства входа
         [JsonPropertyName("r1")]
         public string FirstReader { get; set; }
+
+        // устройство выхода\
         [JsonPropertyName("r2")]
-        // устройство выхода
         public string LastReader { get; set; }
-        [JsonIgnore]
-        public TimeSpan Total { get; set; }
+
+        public TimeSpan Total => ExitTime - EntryTime;
 
         public string Tot => $"{(int)Total.TotalHours:00}:{Total.Minutes:00}";
 

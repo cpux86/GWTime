@@ -15,12 +15,11 @@ using Microsoft.VisualBasic;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore.Internal;
-
 namespace GateLogger
 {
     public partial class Worker : BackgroundService
     {
-        private readonly ILogger<Worker> _logger;
+        private static  ILogger<Worker> _logger;
 
         //private readonly EventsDbContext _dbContext;
         private IMemoryCache _cache;
@@ -69,6 +68,12 @@ namespace GateLogger
 
         private static void NewEventHandler(object? sender, EventResponse e)
         {
+            if (e.UserId == 0)
+            {
+                Console.WriteLine($"Log {e.message}");
+                return;
+            }
+
             using var db = new EventsDbContext();
 
             var userName = Wiegand26Regex().Replace(e.UserName, "").Trim();
@@ -100,7 +105,8 @@ namespace GateLogger
             {
                 db.SaveChanges();
 
-                Console.WriteLine($"{gateEvent.DateTime.ToString("G")} {user.Name} {e.message} {e.ReaderName}");
+                Console.WriteLine($"{gateEvent.DateTime:G} {user.Name} {e.message} {e.ReaderName}");
+                _logger.LogInformation(message: e.message);
             }
             catch (Exception exception)
             {
