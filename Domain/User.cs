@@ -30,6 +30,7 @@ namespace Domain
         /// Группа в которую входит сотрудник
         /// </summary>
         public string? Group { get; set; } = string.Empty;
+        public UserGroup? UserGroup { get; set; }
 
 
         public List<string> GetWorkList(List<int> inputReader, List<int> outputReader)

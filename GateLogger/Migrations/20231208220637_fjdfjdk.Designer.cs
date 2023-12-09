@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GateLogger.Migrations
 {
     [DbContext(typeof(EventsDbContext))]
-    [Migration("20231208183757_foe")]
-    partial class foe
+    [Migration("20231208220637_fjdfjdk")]
+    partial class fjdfjdk
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -89,7 +89,12 @@ namespace GateLogger.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("UserGroupId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserGroupId");
 
                     b.ToTable("Users");
                 });
@@ -130,6 +135,15 @@ namespace GateLogger.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Domain.User", b =>
+                {
+                    b.HasOne("Domain.UserGroup", "UserGroup")
+                        .WithMany("Users")
+                        .HasForeignKey("UserGroupId");
+
+                    b.Navigation("UserGroup");
+                });
+
             modelBuilder.Entity("Domain.Reader", b =>
                 {
                     b.Navigation("Events");
@@ -138,6 +152,11 @@ namespace GateLogger.Migrations
             modelBuilder.Entity("Domain.User", b =>
                 {
                     b.Navigation("Events");
+                });
+
+            modelBuilder.Entity("Domain.UserGroup", b =>
+                {
+                    b.Navigation("Users");
                 });
 #pragma warning restore 612, 618
         }

@@ -99,6 +99,9 @@ namespace Application.Services
 
         public async Task<Report> GetReportByReaders(DateTime startDate, DateTime endDate, List<int> inputReader, List<int> outputReader)
         {
+            var t = await _dbContext.Users
+                .Include(u=>u.UserGroup)
+                .ToListAsync(CancellationToken.None);
 
             var u = await _dbContext.Users
                 //.Where(u=>u.FullName == "Каськов Владимир Васильевич")

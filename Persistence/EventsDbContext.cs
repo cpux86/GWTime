@@ -11,13 +11,17 @@ namespace Persistence
 {
     public class EventsDbContext : DbContext, IEventsDbContext
     {
-        public EventsDbContext(DbContextOptions options) : base(options) { }
+        public EventsDbContext(DbContextOptions options) : base(options)
+        {
+        }
+
         public EventsDbContext()
         {
             Database.EnsureCreated();
         }
-        public DbSet<Event> Events { get; set; } 
-        public DbSet<User> Users { get; set; }
 
+        public DbSet<Event> Events { get; set; }
+        public DbSet<User> Users { get; set; }
+        public DbSet<UserGroup> UserGroups { get; set; }
     }
 }

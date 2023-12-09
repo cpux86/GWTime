@@ -13,5 +13,6 @@ namespace Domain
         /// Название группы
         /// </summary>
         public string Name { get; set; } = string.Empty;
+        public List<User>? Users { get; set; }
     }
 }

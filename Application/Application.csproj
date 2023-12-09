@@ -14,10 +14,4 @@
     <ProjectReference Include="..\Domain\Domain.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Reference Include="GateTermLib">
-      <HintPath>..\..\..\GATE\Terminal\GateTermLib.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
 </Project>

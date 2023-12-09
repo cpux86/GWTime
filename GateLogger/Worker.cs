@@ -83,12 +83,18 @@ namespace GateLogger
             var reader = db.Reader.FirstOrDefault(r => r.Id == (short)e.ReaderId) ?? new Reader { Id = (short)e.ReaderId, Name = e.ReaderName };
             reader.Name = e.ReaderName;
 
+            var group = db.UserGroups.FirstOrDefault(g => g.Name == e.Group) ?? new UserGroup { Name = e.Group };
+            
+
             //var user = db.Users.FirstOrDefault(u => u.Id == e.UserId) ?? new User { Id = e.UserId, Key = key, FullName = e.FullName, Name = userName, Group = e.Group };
-            var user = db.Users.FirstOrDefault(u => u.Id == e.UserId) ?? new User { Id = e.UserId, FullName = e.FullName, Name = userName, Group = e.Group };
+            var user = db.Users.FirstOrDefault(u => u.Id == e.UserId) ?? new User { Id = e.UserId, FullName = e.FullName, Name = userName};
             user.Name = userName;
             user.FullName = e.FullName;
-            user.Group = e.Group;
+            //user.Group = e.Group;
+            user.UserGroup = group;
             //user.Key = key;
+
+            
 
             var gateEvent = new Event
             {
@@ -99,6 +105,7 @@ namespace GateLogger
 
             };
 
+            //reader.Events.Add(gateEvent);
 
             db.Events.Add(gateEvent);
             try
@@ -106,7 +113,7 @@ namespace GateLogger
                 db.SaveChanges();
 
                 Console.WriteLine($"{gateEvent.DateTime:G} {user.Name} {e.message} {e.ReaderName}");
-                _logger.LogInformation(message: e.message);
+                //_logger.LogInformation(message: e.message);
             }
             catch (Exception exception)
             {
