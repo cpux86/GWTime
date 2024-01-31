@@ -10,7 +10,7 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddDbContext<EventsDbContext>(opt =>
             opt.UseSqlServer("Server=10.65.68.252; Database=GWTime_test; User ID=sa; Password=LaMp368&;Integrated Security=false;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False"),
             ServiceLifetime.Singleton);
-
+        
 
 
         //options.UseSqlServer("Server=10.65.68.252; Database=GWTime; User ID=sa; Password=LaMp368&;Integrated Security=false;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False");
@@ -20,7 +20,6 @@ IHost host = Host.CreateDefaultBuilder(args)
        
     })
     .Build();
-
 await host.RunAsync();
 
 

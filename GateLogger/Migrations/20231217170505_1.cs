@@ -6,13 +6,25 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace GateLogger.Migrations
 {
     /// <inheritdoc />
-    public partial class fjdfjdk : Migration
+    public partial class _1 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "Reader",
+                name: "Messages",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false),
+                    Text = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Messages", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Readers",
                 columns: table => new
                 {
                     Id = table.Column<short>(type: "smallint", nullable: false),
@@ -20,7 +32,7 @@ namespace GateLogger.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Reader", x => x.Id);
+                    table.PrimaryKey("PK_Readers", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -43,7 +55,6 @@ namespace GateLogger.Migrations
                     Id = table.Column<int>(type: "int", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     FullName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Group = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     UserGroupId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
@@ -62,7 +73,7 @@ namespace GateLogger.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    EventCode = table.Column<byte>(type: "tinyint", nullable: false),
+                    MessageId = table.Column<int>(type: "int", nullable: false),
                     ReaderId = table.Column<short>(type: "smallint", nullable: false),
                     UserId = table.Column<int>(type: "int", nullable: false),
                     dateTime = table.Column<DateTime>(type: "datetime2(2)", precision: 2, nullable: false)
@@ -71,9 +82,15 @@ namespace GateLogger.Migrations
                 {
                     table.PrimaryKey("PK_Events", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Events_Reader_ReaderId",
+                        name: "FK_Events_Messages_MessageId",
+                        column: x => x.MessageId,
+                        principalTable: "Messages",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Events_Readers_ReaderId",
                         column: x => x.ReaderId,
-                        principalTable: "Reader",
+                        principalTable: "Readers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
@@ -85,9 +102,9 @@ namespace GateLogger.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Events_EventCode_ReaderId_UserId_dateTime",
+                name: "IX_Events_MessageId_ReaderId_UserId_dateTime",
                 table: "Events",
-                columns: new[] { "EventCode", "ReaderId", "UserId", "dateTime" },
+                columns: new[] { "MessageId", "ReaderId", "UserId", "dateTime" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -113,7 +130,10 @@ namespace GateLogger.Migrations
                 name: "Events");
 
             migrationBuilder.DropTable(
-                name: "Reader");
+                name: "Messages");
+
+            migrationBuilder.DropTable(
+                name: "Readers");
 
             migrationBuilder.DropTable(
                 name: "Users");

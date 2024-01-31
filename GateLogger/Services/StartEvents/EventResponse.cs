@@ -33,8 +33,7 @@ namespace GateLogger.Services.StartEvents
 
         [JsonPropertyName("fio")] public string FullName { get; set; } = string.Empty;
 
-        [JsonPropertyName("group")] public string? Group { get; set; }
-
+        [JsonPropertyName("group")] public string Group { get; set; } = string.Empty;
 
         #endregion
 

@@ -19,7 +19,7 @@ namespace GateLogger
 {
     public partial class Worker : BackgroundService
     {
-        private static  ILogger<Worker> _logger;
+        private static ILogger<Worker> _logger;
 
         //private readonly EventsDbContext _dbContext;
         private IMemoryCache _cache;
@@ -38,9 +38,12 @@ namespace GateLogger
 
             //while (!stoppingToken.IsCancellationRequested)
             //{
-
+            //    Console.WriteLine(1);
             //}
+            
+            
 
+           
 
             var serverValue = _configuration.GetSection("GateServer").Value;
 
@@ -55,6 +58,7 @@ namespace GateLogger
                     //new GateTcpClient(ip, 1234).ConnectAsync();
                     var client = new GateTcpClient(ip);
                     client.ConnectAsync();
+
                 }
 
             GateTcpClient.NewEvent += NewEventHandler;
@@ -62,10 +66,7 @@ namespace GateLogger
 
         }
 
-
-
         
-
         private static void NewEventHandler(object? sender, EventResponse e)
         {
             if (e.UserId == 0)
@@ -76,38 +77,50 @@ namespace GateLogger
 
             using var db = new EventsDbContext();
 
-            var userName = Wiegand26Regex().Replace(e.UserName, "").Trim();
+            // тип события
+            var message = db.Messages.FirstOrDefault(m => m.Id == e.EventCode) ??
+                          new Message { Id = (byte)e.EventCode, Text = e.message };
+            message.Text = e.message;
 
+
+            var userName = Wiegand26Regex().Replace(e.UserName, "").Trim();
+            // извлекаем номер ключа
             var key = Wiegand26Regex().Match(e.UserName).Value;
 
-            var reader = db.Reader.FirstOrDefault(r => r.Id == (short)e.ReaderId) ?? new Reader { Id = (short)e.ReaderId, Name = e.ReaderName };
+            var reader = db.Readers.FirstOrDefault(r => r.Id == (short)e.ReaderId) ?? new Reader { Id = (short)e.ReaderId, Name = e.ReaderName };
             reader.Name = e.ReaderName;
+            // если пользователю не присвоена группа, то помещаем его в группу "Без группы"
+            if (e.Group == string.Empty)
+            {
+                e.Group = "Без группы";
+            }
 
-            var group = db.UserGroups.FirstOrDefault(g => g.Name == e.Group) ?? new UserGroup { Name = e.Group };
-            
+            var group = db.UserGroups.FirstOrDefault(g => g.Name == e.Group) ?? new UserGroup{Name = e.Group};
+            if (group.Id == 0)
+            {
+                db.UserGroups.Add(group);
+            }
 
-            //var user = db.Users.FirstOrDefault(u => u.Id == e.UserId) ?? new User { Id = e.UserId, Key = key, FullName = e.FullName, Name = userName, Group = e.Group };
-            var user = db.Users.FirstOrDefault(u => u.Id == e.UserId) ?? new User { Id = e.UserId, FullName = e.FullName, Name = userName};
+            var user = db.Users.FirstOrDefault(u => u.Id == e.UserId) ?? new User { Id = e.UserId, FullName = e.FullName, Name = userName };
+
             user.Name = userName;
             user.FullName = e.FullName;
-            //user.Group = e.Group;
             user.UserGroup = group;
             //user.Key = key;
 
-            
 
             var gateEvent = new Event
             {
                 User = user,
                 Reader = reader,
                 DateTime = DateTime.Parse(e.DateTime),
-                EventCode = (byte)e.EventCode,
+                Message = message
 
             };
 
-            //reader.Events.Add(gateEvent);
-
             db.Events.Add(gateEvent);
+
+
             try
             {
                 db.SaveChanges();

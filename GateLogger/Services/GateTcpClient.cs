@@ -65,7 +65,6 @@ namespace GateLogger.Services
             if (encodingBytes[^1] != '\n') return;
 
 
-
             var response = Encoding.UTF8.GetString(_receiveBuffer.ToArray());
             _receiveBuffer.Clear();
 
@@ -73,14 +72,24 @@ namespace GateLogger.Services
 
             foreach (var str in list)
             {
-                var result = JsonSerializer.Deserialize<StartEventsResponse>(str, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                var gateEvent = result?._event;
-                if (gateEvent == null) continue;
-
-                lock (gateEvent)
+                try
                 {
-                    NewEvent.Invoke(this, gateEvent);
+                    var result = JsonSerializer.Deserialize<StartEventsResponse>(str, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    var gateEvent = result?._event;
+                    if (gateEvent == null) continue;
+
+                    lock (gateEvent)
+                    {
+                        NewEvent.Invoke(this, gateEvent);
+                    }
                 }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+
+
+                
             }
 
         }

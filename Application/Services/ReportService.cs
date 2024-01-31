@@ -99,35 +99,34 @@ namespace Application.Services
 
         public async Task<Report> GetReportByReaders(DateTime startDate, DateTime endDate, List<int> inputReader, List<int> outputReader)
         {
-            var t = await _dbContext.Users
-                .Include(u=>u.UserGroup)
-                .ToListAsync(CancellationToken.None);
-
-            var u = await _dbContext.Users
-                //.Where(u=>u.FullName == "Каськов Владимир Васильевич")
-                //.Where(u=>usr.Contains(u.Id))
-                //.Where(u=>u.Group == "Техническая служба")
+            var usersList = await _dbContext.Users
                 .AsNoTracking()
+                .Include(e => e.UserGroup)
                 .Include(u => u.Events!
                     .Where(e => e.DateTime >= startDate && e.DateTime <= endDate)
-                    .Where(e => e.EventCode == 2)
                     .Where(e => inputReader.Contains(e.ReaderId) || outputReader.Contains(e.ReaderId))
                     .OrderBy(e => e.DateTime)).ThenInclude(e => e.Reader)
-                
                 .ToListAsync(CancellationToken.None);
 
             var report = new Report();
             report.Start = startDate;
             report.End = endDate;
+            
 
-            foreach (var user in u)
+            foreach (var user in usersList)
             {
-                if (user.Events != null && !user.Events.Any()) { continue; }
+                //if (user.Events != null && !user.Events.Any()) continue;
 
                 var worker = new Worker();
+                worker.Group = new Group
+                {
+                    Name = user.UserGroup.Name
+                };
+
                 worker.FullName = user.FullName;
-                worker.Group = user.Group;
                 worker.Name = user.Name;
+                //worker.group = user.UserGroup.Name;
+                
                 
                 var pre = new Event();
                 foreach (var evt in user.Events)
@@ -140,80 +139,26 @@ namespace Application.Services
                         v.FirstReader = pre.Reader.Name;
                         v.LastReader = evt.Reader.Name;
                         worker.WorkTimes.Add(v);
-                        //Console.WriteLine($"{v.FirstReader} - {v.LastReader} {v.Tot}");
                     }
 
                     pre = evt;
                 }
 
-
                 report.Workers.Add(worker);
 
             }
 
-            // var list1 = u.Select(user => user.GetWorkList(inputReader, outputReader)).Where(wtList => wtList.Count > 0).Cast<object>().ToList();
-            var test = report.Workers.OrderBy(e => e.FullName).ThenBy(e=>e.Group).ToList<Worker>();
-            report.Workers = test;
+            var users = report.Workers.OrderBy(e => e.FullName)
+                .ThenBy(e => e.Group)
+                .ToList<Worker>();
+            var groups = users.GroupBy(e => e.Group!.Name)
+                .Select(e => new Group { Name = e.Key, Workers = e.ToList<Worker>() })
+                .OrderBy(e => e.Name)
+                .ToList();
+
+            report.Groups = groups;
             return report;
 
-
-            var events = await _dbContext.Events
-                .AsNoTracking()
-                .Include(e => e.Reader)
-                .Include(e => e.User)
-                .Where(e => e.EventCode == 2)
-                .Where(e => e.DateTime >= startDate && e.DateTime <= endDate)
-                .Where(e=> inputReader.Contains(e.ReaderId) || outputReader.Contains(e.ReaderId))
-
-                .OrderBy(e => e.UserId).ThenBy(e => e.DateTime)
-                .ToListAsync(CancellationToken.None);
-
-           
-            var list = new List<string>();
-            var wt = new List<WorkTime>();
-
-            var preEvent = new Event();
-            //foreach (var current in from current in events let exists = inputList.Exists(x => x == preEvent.ReaderId) select current)
-            foreach (var current in events)
-            {
-                //var exists = inputList.Exists(x => x == preEvent.ReaderId);
-
-                //if (preEvent.ReaderId == inputReader && current.ReaderId == outputReader && preEvent.UserId == current.UserId)
-
-                if (inputReader.Exists(x => x == preEvent.ReaderId) && outputReader.Exists(x => x == current.ReaderId) && preEvent.UserId == current.UserId)
-                {
-                    //var report = new Report
-                    //{
-                    //    Start = startDate,
-                    //    End = endDate
-                    //};
-
-                    //var worker = new Worker
-                    //{
-                    //    FullName = current.User.FullName
-                    //};
-
-                    //wt.Add(new WorkTime()
-                    //{
-                    //    EntryTime = preEvent.DateTime,
-                    //    ExitTime = current.DateTime,
-                    //    FirstReader = preEvent.Reader.Name,
-                    //    LastReader = current.Reader.Name,
-                    //    Total = current.DateTime.Subtract(preEvent.DateTime)
-                    //});
-
-                    list.Add($"{current.User?.FullName} " +
-                             $"{preEvent.Reader.Name}: {preEvent.DateTime}" +
-                             $" {current.Reader.Name}: {current.DateTime} " +
-                             $"Итого: {(int)current.DateTime.Subtract(preEvent.DateTime).TotalHours:00}:{current.DateTime.Subtract(preEvent.DateTime).Minutes:00}"
-                    );
-                }
-
-                preEvent = current;
-            }
-
-            //return wt;
-           // return list;
         }
     }
 }

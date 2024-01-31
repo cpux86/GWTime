@@ -4,16 +4,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Domain
 {
-    [Index(nameof(EventCode), nameof(ReaderId), nameof(UserId), nameof(DateTime), IsUnique = true)]
+    [Index(nameof(MessageId), nameof(ReaderId), nameof(UserId), nameof(DateTime), IsUnique = true)]
     public class Event {
         public int Id { get; set; }
 
         //[Column("eventCode")] 
-        public byte EventCode { get; set; }
+        public int MessageId { get; set; }
+        public Message Message { get; set; } = new();
 
         //[Column("readerId")]
         public short ReaderId { get; set; }
-        public Reader Reader { get; set; }
+        public Reader Reader { get; set; } = new();
 
 
         //[Column("userId")]
