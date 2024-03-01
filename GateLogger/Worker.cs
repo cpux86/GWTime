@@ -15,6 +15,7 @@ using Microsoft.VisualBasic;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore.Internal;
+using System.Text.Json;
 namespace GateLogger
 {
     public partial class Worker : BackgroundService
@@ -40,10 +41,10 @@ namespace GateLogger
             //{
             //    Console.WriteLine(1);
             //}
-            
-            
 
-           
+
+
+
 
             var serverValue = _configuration.GetSection("GateServer").Value;
 
@@ -57,6 +58,9 @@ namespace GateLogger
                     var port = endpoint.Port;
                     //new GateTcpClient(ip, 1234).ConnectAsync();
                     var client = new GateTcpClient(ip);
+                    client.OptionKeepAlive = true;
+                    client.OptionTcpKeepAliveTime = 30;
+                    //client.OptionTcpKeepAliveInterval = 10;
                     client.ConnectAsync();
 
                 }
@@ -66,7 +70,7 @@ namespace GateLogger
 
         }
 
-        
+
         private static void NewEventHandler(object? sender, EventResponse e)
         {
             if (e.UserId == 0)
@@ -95,7 +99,7 @@ namespace GateLogger
                 e.Group = "Без группы";
             }
 
-            var group = db.UserGroups.FirstOrDefault(g => g.Name == e.Group) ?? new UserGroup{Name = e.Group};
+            var group = db.UserGroups.FirstOrDefault(g => g.Name == e.Group) ?? new UserGroup { Name = e.Group };
             if (group.Id == 0)
             {
                 db.UserGroups.Add(group);

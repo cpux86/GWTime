@@ -40,6 +40,9 @@ namespace GateLogger.Services
         {
             Console.WriteLine($"client connected a new session with Id {Id} {Address} {Port}");
             //this.SendAsync(JsonSerializer.Serialize(new GetConfigCommand()));
+
+            //this.Send(new byte[] { 0x0 });
+            
             this.SendAsync(JsonSerializer.Serialize(new StartEventsCommand()));
 
         }
@@ -55,6 +58,7 @@ namespace GateLogger.Services
             if (!_stop)
                 ConnectAsync();
         }
+
 
         private readonly List<byte> _receiveBuffer = new();
         protected override void OnReceived(byte[] buffer, long offset, long size)
@@ -74,9 +78,12 @@ namespace GateLogger.Services
             {
                 try
                 {
-                    var result = JsonSerializer.Deserialize<StartEventsResponse>(str, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    Console.WriteLine(str);
+                    var result = JsonSerializer.Deserialize<StartEventsResponse>(str,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                     var gateEvent = result?._event;
                     if (gateEvent == null) continue;
+
 
                     lock (gateEvent)
                     {

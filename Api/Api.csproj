@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="FreeSpire.XLS" Version="12.7.0" />
     <PackageReference Include="Google.Protobuf" Version="3.24.3" />
     <PackageReference Include="Grpc" Version="2.46.6" />
     <PackageReference Include="Grpc.AspNetCore" Version="2.57.0" />
@@ -38,6 +39,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="7.0.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.4" />
+    <PackageReference Include="PRTelegramBot" Version="0.5.5" />
     <PackageReference Include="RabbitMQ.Client" Version="6.5.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
   </ItemGroup>
@@ -45,6 +47,11 @@
   <ItemGroup>
     <ProjectReference Include="..\Application\Application.csproj" />
     <ProjectReference Include="..\Persistence\Persistence.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="BotControllers\MenuHandlers\" />
+    <Folder Include="BotControllers\Enums\" />
   </ItemGroup>
 
 </Project>

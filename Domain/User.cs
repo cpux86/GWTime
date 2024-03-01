@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Domain
 {
-    public class User : BaseEntity, IEquatable<User>
+    public class User : BaseEntity
     {
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { get; set; }
@@ -20,18 +20,12 @@ namespace Domain
         /// <summary>
         /// События использования ключа
         /// </summary>
-        public HashSet<Event>? Events { get; set; } = new HashSet<Event>();
+        public List<Event>? Events { get; set; } = new List<Event>();
 
         /// <summary>
         /// Группа в которую входит сотрудник
         /// </summary>
-       // public string? Group { get; set; } = string.Empty;
         public UserGroup? UserGroup { get; set; }
-
-        public bool Equals(User? other)
-        {
-            throw new NotImplementedException();
-        }
 
     }
 }

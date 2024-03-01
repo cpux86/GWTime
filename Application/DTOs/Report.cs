@@ -20,6 +20,11 @@ namespace Application.DTOs
 
         [JsonIgnore]
         public List<Worker> Workers { get; set; } = new List<Worker>();
+
+        public async Task ToExel()
+        {
+
+        }
     }
 
     public class Group : IComparable
@@ -38,19 +43,20 @@ namespace Application.DTOs
 
     public class Worker 
     {
-        double _total => WorkTimes.Sum(e => e.Total.TotalHours);
+        //double _total => WorkTimes.Sum(e => e.Total.TotalHours);
 
+        private TimeSpan _total => TimeSpan.FromHours(WorkTimes.Sum(e => e.Total.TotalHours));
         
+
         public string Name { get; set; } = string.Empty;
         public string FullName { get; set; } = string.Empty;
 
         [JsonIgnore]
         public Group? Group { get; set; }
 
-        //public string group { get; set; }
-
         [JsonPropertyName("total")]
-        public string TotalTime => $"{(int)_total:00}:{(((_total - (int)_total)) * 60):00}";
+        //public string TotalTime => $"{(int)_total:00}:{(((_total - (int)_total)) * 60):00}";
+        public string TotalTime => $"{(int)_total.TotalHours:00}:{_total.Minutes:00}";
 
         [JsonPropertyName("details")]
         public List<WorkTime> WorkTimes { get; set; } = new List<WorkTime>();
@@ -58,15 +64,22 @@ namespace Application.DTOs
 
     public class WorkTime
     {
+
+        public WorkTime(DateTime dt1, DateTime dt2)
+        {
+            this.EntryTime = dt1;
+            this.ExitTime = dt2;
+        }
+
         // Время входа
         //[JsonPropertyName("t1")]
         [JsonPropertyName("dt_in")]
-        public DateTime EntryTime { get; set; }
+        public DateTime EntryTime { get; }
 
         // время выхода
         //[JsonPropertyName("t2")]
         [JsonPropertyName("dt_out")]
-        public DateTime ExitTime { get; set; }
+        public DateTime ExitTime { get; }
 
         // устройства входа
         //[JsonPropertyName("r1")]
@@ -83,5 +96,7 @@ namespace Application.DTOs
 
         [JsonPropertyName("time")]
         public string Tot => $"{(int)Total.TotalHours:00}:{Total.Minutes:00}";
+
+
     }
 }

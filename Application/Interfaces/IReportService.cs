@@ -12,6 +12,8 @@ namespace Application.Interfaces
     {
         //public Task<List<Event>> GetFirstAndLastUseKey(int userId, DateTime startDate, DateTime endDate);
 
-        public Task<Report> GetReportByReaders(DateTime startDate, DateTime endDate, List<int> inputReader, List<int> outputReader);
+        public Task<Report> GetReportByReaders(DateTime startDate, DateTime endDate, List<int> inputReader, List<int> outputReader, int messageId=2);
+        public Task<List<User>> GetUserListWithEventsByDateRange(DateTime startDate, DateTime endDate);
+        public Task CurrentWorkerList();
     }
 }

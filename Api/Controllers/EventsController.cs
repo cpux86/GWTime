@@ -3,6 +3,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.JavaScript;
 using System.Text;
+using Api.Models;
 using Application.DTOs;
 using Application.Interfaces;
 using Domain;
@@ -45,23 +46,20 @@ namespace Api.Controllers
             //Task.Delay(10000).Wait();
             //ps.Close();
         }
-        [HttpGet]
+
+        [HttpPost]
         [Route("ps")]
-        public async Task<List<int>> GetProcess()
+        public async Task GetRoutPoints([FromBody] List<WorkingDays> workingDaysList)
         {
-
-            var pss = Process.GetProcessesByName("EventLoggerClientApp");
-
-            var ts = pss.AsEnumerable().Select(x => x.Id).ToList();
-
-            foreach (var ps in pss)
-            {
-                //var arguments = ps.StartInfo.Arguments;
-                ps.Kill();
-            }
-
-            return ts;
+            Console.WriteLine();
         }
+
+        
+
+
+
+
+
         //[HttpGet]
         //[Route("users")]
         //public async Task<List<User>> GetUserListAsync()
@@ -89,5 +87,13 @@ namespace Api.Controllers
         {
             return await _reportService.GetReportByReaders(startDate, endDate, inputReader, outputReader);
         }
+
+        //[HttpGet]
+        //[Route("tracking")]
+        //public async Task<List<User>> GetUserListWithEventsByDateRange(DateTime startDate, DateTime endDate)
+        //{
+        //    var t = await _reportService.GetUserListWithEventsByDateRange(startDate, endDate);
+        //    return t;
+        //}
     }
 }

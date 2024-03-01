@@ -3,13 +3,19 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Application.DTOs;
+using Application.Features.Tacking;
 using Application.Interfaces;
 using Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
+using Microsoft.Extensions.DependencyInjection;
+
 
 namespace Application.Services
 {
@@ -34,88 +40,56 @@ namespace Application.Services
         /// <param name="endDate"></param>
         /// <param name="inputReader"></param>
         /// <returns></returns>
-        //public async Task<List<Event>> GetFirstAndLastUseKey(int userId, DateTime startDate, DateTime endDate)
-        //{
-        //    var events = await _dbContext.Events
-        //        .Where(e => e.dateTime >= startDate && e.dateTime <= endDate)
-        //        .Where(e=>e.eventCode == 2)
-        //        .Where(e => e.userId > userId)
-        //        .AsNoTracking()
-        //        .ToListAsync(CancellationToken.None);
-        //    return events;
-
-        //    //var sw = new Stopwatch();
-        //    //sw.Start();
-        //    //var start = DateTime.Parse("2023-10-16 00:00:00.0000000");
-        //    //var end = DateTime.Now;
-        //    //var events = await _dbContext.Events
-        //    //    .AsNoTracking()
-        //    //    //.Where(e => e.eventCode == 2)
-        //    //    //.Where(e => e.dateTime >= start && e.dateTime <= end)
-
-        //    //    //.Where(e => e.userId == 2954)
-        //    //    //.Where(e => e.readerId == 79 || e.readerId == 80)
-        //    //    //.Select(e => new { e.dateTime, e.userId, e.name })
-        //    //    //.OrderByDescending(e=>e.userId).ThenByDescending(e=>e.dateTime)
-        //    //    //.OrderBy(e => e.userId).ThenBy(e => e.dateTime)
-        //    //    .ToListAsync(CancellationToken.None);
-        //    //var t = sw.ElapsedMilliseconds;
-        //    //return new List<Event>();
-        //}
-
-        //public async Task<List<string>> GetReportByReaders(DateTime startDate, DateTime endDate, int inputReader, int outputReader)
-        //{
-        //    var events = await _dbContext.Events
-        //        .AsNoTracking()
-        //        .Where(e => e.eventCode == 2)
-        //        .Where(e => e.readerId == inputReader || e.readerId == outputReader)
-        //        //.Where(e => e.dateTime >= start && e.dateTime <= end)
-        //        //.Where(e=>e.userId == 5)
-        //        //.Where(e => e.readerId == 79 || e.readerId == 80)
-        //        //.Select(e=> new {e.readerId, e.dateTime, e.userId, e.name})
-        //        //.OrderByDescending(e=>e.userId).ThenByDescending(e=>e.dateTime)
-        //        .OrderBy(e => e.userId).ThenBy(e => e.dateTime)
-        //        .ToListAsync(CancellationToken.None);
-        //    //var input = 80;
-        //    //var output = 79;
-
-        //    var list = new List<string>();
-
-        //    var preEvent = new Event();
-        //    foreach (var current in events)
-        //    {
-
-        //        if (preEvent.readerId == inputReader && current.readerId == outputReader && preEvent.userId == current.userId)
-        //        {
-        //            list.Add(
-        //                $"Name {current.name} Прибыл: {preEvent.dateTime} Убыл: {current.dateTime} Итого: {current.dateTime.Subtract(preEvent.dateTime)}");
-        //            //System.Diagnostics.Debug.WriteLine($"Name {current.name} Прибыл: {preEvent.dateTime} Убыл: {current.dateTime} Итого: {current.dateTime.Subtract(preEvent.dateTime)}");
-        //        }
-        //        preEvent = current;
-        //    }
-        //    return list;
-        //}
-
-
-        public async Task<Report> GetReportByReaders(DateTime startDate, DateTime endDate, List<int> inputReader, List<int> outputReader)
+        public async Task<List<Event>> GetFirstAndLastUseKey(int userId, DateTime startDate, DateTime endDate)
         {
+            var sw = new Stopwatch();
+            sw.Start();
+            var start = DateTime.Parse("2023-10-16 00:00:00.0000000");
+            var end = DateTime.Now;
+            var events = await _dbContext.Events
+                .AsNoTracking()
+                .Where(e => e.MessageId == 2)
+                .Where(e => e.DateTime >= start && e.DateTime <= end)
+
+                .Where(e => e.UserId == 2954)
+                .Where(e => e.ReaderId == 79 || e.UserId == 80)
+                .Select(e => new { e.DateTime, e.UserId, e.User.Name })
+                .OrderByDescending(e => e.UserId).ThenByDescending(e => e.DateTime)
+                .OrderBy(e => e.UserId).ThenBy(e => e.DateTime)
+                .ToListAsync(CancellationToken.None);
+            var t = sw.ElapsedMilliseconds;
+            return new List<Event>();
+        }
+
+
+        public async Task<Report> GetReportByReaders(DateTime startDate, DateTime endDate, List<int> inputReader, List<int> outputReader, int messageId = 2)
+        {
+            Stopwatch stopwatch = new Stopwatch();
+            //засекаем время начала операции
+            stopwatch.Start();
             var usersList = await _dbContext.Users
                 .AsNoTracking()
                 .Include(e => e.UserGroup)
                 .Include(u => u.Events!
                     .Where(e => e.DateTime >= startDate && e.DateTime <= endDate)
+                    .Where(e => e.MessageId == messageId)
                     .Where(e => inputReader.Contains(e.ReaderId) || outputReader.Contains(e.ReaderId))
                     .OrderBy(e => e.DateTime)).ThenInclude(e => e.Reader)
                 .ToListAsync(CancellationToken.None);
 
-            var report = new Report();
-            report.Start = startDate;
-            report.End = endDate;
-            
+            stopwatch.Stop();
+            //смотрим сколько миллисекунд было затрачено на выполнение
+            Console.WriteLine(stopwatch.ElapsedMilliseconds);
+
+            var report = new Report
+            {
+                Start = startDate,
+                End = endDate
+            };
+
 
             foreach (var user in usersList)
             {
-                //if (user.Events != null && !user.Events.Any()) continue;
 
                 var worker = new Worker();
                 worker.Group = new Group
@@ -125,21 +99,28 @@ namespace Application.Services
 
                 worker.FullName = user.FullName;
                 worker.Name = user.Name;
-                //worker.group = user.UserGroup.Name;
-                
-                
+
                 var pre = new Event();
                 foreach (var evt in user.Events)
                 {
-                    var v = new WorkTime();
                     if (inputReader.Exists(x => x == pre.ReaderId) && outputReader.Exists(x => x == evt.ReaderId))
                     {
-                        v.EntryTime = pre.DateTime;
-                        v.ExitTime = evt.DateTime;
-                        v.FirstReader = pre.Reader.Name;
-                        v.LastReader = evt.Reader.Name;
+                        var v = new WorkTime(pre.DateTime, evt.DateTime)
+                        {
+                            FirstReader = pre.Reader.Name,
+                            LastReader = evt.Reader.Name
+                        };
                         worker.WorkTimes.Add(v);
                     }
+                    //else if(inputReader.Exists(x => x == pre.ReaderId))
+                    //{
+                    //    var v = new WorkTime(pre.DateTime, evt.DateTime)
+                    //    {
+                    //        FirstReader = pre.Reader.Name,
+                    //        LastReader = evt.Reader.Name
+                    //    };
+                    //    worker.WorkTimes.Add(v);
+                    //}
 
                     pre = evt;
                 }
@@ -157,8 +138,94 @@ namespace Application.Services
                 .ToList();
 
             report.Groups = groups;
+            
             return report;
 
+        }
+        /// <summary>
+        /// Возвращает с  список сотрудников с событиями по всем устройствам за определенный период 
+        /// </summary>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <returns></returns>
+        public async Task<List<User>> GetUserListWithEventsByDateRange(DateTime startDate, DateTime endDate)
+        {
+
+
+            //var usersList = await _dbContext.Users
+            //    .AsNoTracking()
+            //    .Include(t => t.Events)!.ThenInclude(e => e.Message)
+            //    .Include(t => t.Events)!.ThenInclude(e => e.Reader)
+            //    .Include(e => e.UserGroup).Take(1)
+            //    .ToListAsync(CancellationToken.None);
+            //return usersList;
+
+
+            var usersList = await _dbContext.Users
+                    .AsNoTracking()
+                    .Include(t => t.Events)!.ThenInclude(e => e.Message)
+                    .Include(t => t.Events)!.ThenInclude(e => e.Reader)
+                    .Include(e => e.UserGroup)
+
+                .Select(e => new User()
+                {
+                    Id = e.Id,
+                    Name = e.Name,
+                    FullName = e.FullName,
+                    UserGroup = e.UserGroup,
+                    Events = e.Events!
+                        .Where(e => e.DateTime >= startDate && e.DateTime <= endDate)
+                        .ToList()
+                })
+                    .ToListAsync(CancellationToken.None);
+            return usersList;
+        }
+
+
+        /// <summary>
+        /// Текущий список сотрудников на производстве
+        /// </summary>
+        /// <returns></returns>
+        public async Task CurrentWorkerList()
+        {
+            //// Устройства входа
+            //var inputReader = new List<int> { 141, 87};
+            //var usersList = await _dbContext.Users
+            //    .AsNoTracking()
+            //    //.Include(e => e.UserGroup)
+            //    .Include(u => u.Events!
+            //        //.Where(e=> inputReader.Contains(e.ReaderId))
+            //        .Where(e => e.DateTime >= DateTime.Parse("2024-02-01 06:00:00.00"))
+            //        .OrderBy(e => e.DateTime))
+            //    .ToListAsync(CancellationToken.None);
+            //foreach (var user in usersList)
+            //{
+            //    Console.WriteLine($"{user.Name}");
+            //}
+
+
+            var outputReader = new List<int> { 142, 88 };
+
+            //var users = await _dbContext.Users
+            //    .Include(e => e.Events!.Where(e => e.DateTime >= DateTime.Parse("2024-02-01 06:00:00.00") && !outputReader.Contains(e.ReaderId)))
+            //    .ToListAsync(CancellationToken.None);
+
+
+            //var res = users.Where(e => e.Events!.Count > 0).OrderBy(e=>e.Name).ToList();
+
+
+            
+        }
+
+
+
+        public async Task TrackingByUserIdAndDateAsync(List<WorkingDays> workingDays)
+        {
+            var tackPoints = await _dbContext.Events
+                .AsNoTracking()
+                .Where(e=>e.User.Id == 5)
+                .ToListAsync(CancellationToken.None);
+                
         }
     }
 }
