@@ -1,9 +1,14 @@
-﻿namespace GateLogger.Services.StartEvents
+﻿using System.Text.Json.Serialization;
+
+namespace GateLogger.Services.StartEvents
 {
     public class StartEventsCommand
     {
-        public string command { get; set; } = "startEvents";
+        [JsonPropertyName("command")]
+        public string Command { get; set; } = "startEvents";
         //public string command { get; set; } = "getConfig";
-        public int? result { get; set; } = 1;
+
+        [JsonPropertyName("result")]
+        public int Result { get; set; } = 1;
     }
 }

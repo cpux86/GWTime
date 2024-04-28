@@ -10,18 +10,11 @@ namespace GateLogger.Services
     {
         private const int _port = 1917;
         private bool _stop;
-
-        public GateTcpClient(string address) : base(address, _port)
-        {
-        }
-        //public delegate Task AsyncEventHandler<TEventArgs>(object? sender, TEventArgs args);
-
-        //public static event AsyncEventHandler<EventResponse> NewEventAsync = delegate { return Task.CompletedTask; };
-        //public static event AsyncEventHandler<EventResponse>? NewEventAsync;
-        //public static event Func<EventResponse, Task> NewAccess; 
+        private readonly object _lock = new object();
         public static event Func<EventResponse, Task>? NewEvent;
 
-        //public static event EventHandler<EventResponse> NewEvent = delegate {};
+
+        public GateTcpClient(string address) : base(address, _port) { }
         public GateTcpClient(string address, int port) : base(address, port) { }
 
         public void DisconnectAndStop()
@@ -34,7 +27,7 @@ namespace GateLogger.Services
 
         protected override void OnConnected()
         {
-            Console.WriteLine($"client connected a new session with Id {Id} {Address} {Port}");
+            Console.WriteLine($"Установлено соединение с сервером {Address} {Port}");
             //this.SendAsync(JsonSerializer.Serialize(new GetConfigCommand()));
 
             //this.Send(new byte[] { 0x0 });
@@ -74,16 +67,14 @@ namespace GateLogger.Services
             {
                 try
                 {
-                    Console.WriteLine(str);
+                    //Console.WriteLine(str);
                     var result = JsonSerializer.Deserialize<StartEventsResponse>(str,
                         new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    var gateEvent = result?._event;
+                    var gateEvent = result?.Event;
                     if (gateEvent == null) continue;
 
-                    lock (gateEvent)
+                    lock (_lock)
                     {
-                        //NewEvent.Invoke(this, gateEvent);
-                        //NewEventAsync?.Invoke(this, gateEvent);
                         NewEvent!(gateEvent);
                     }
                 }

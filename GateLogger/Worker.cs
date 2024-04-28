@@ -7,6 +7,7 @@ using Microsoft.Extensions.Caching.Memory;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace GateLogger
 {
@@ -28,6 +29,7 @@ namespace GateLogger
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            GateTcpClient.NewEvent += NewEventHandler;
 
             var serverValue = _configuration.GetSection("GateServer").Value;
 
@@ -40,16 +42,16 @@ namespace GateLogger
                     var ip = endpoint.Address.ToString();
                     var port = endpoint.Port;
                     //new GateTcpClient(ip, 1234).ConnectAsync();
-                    var client = new GateTcpClient(ip);
-                    client.OptionKeepAlive = true;
-                    client.OptionTcpKeepAliveTime = 30;
+                    var client = new GateTcpClient(ip)
+                    {
+                        OptionKeepAlive = true,
+                        OptionTcpKeepAliveTime = 30
+                    };
                     //client.OptionTcpKeepAliveInterval = 10;
                     client.ConnectAsync();
-
                 }
-            GateTcpClient.NewEvent += NewEventHandler;
+           
             //await Task.CompletedTask;
-
         }
 
 
@@ -57,7 +59,7 @@ namespace GateLogger
         {
             if (e.UserId == 0)
             {
-                Console.WriteLine($"Log {e.message}");
+                Console.WriteLine($"Log {e.Message}");
                 return;
             }
 
@@ -65,8 +67,8 @@ namespace GateLogger
 
             // тип события
             var message = await db.Messages.FirstOrDefaultAsync(m => m.Id == e.EventCode) ??
-                          new Message { Id = (byte)e.EventCode, Text = e.message };
-            message.Text = e.message;
+                          new Message { Id = (byte)e.EventCode, Text = e.Message };
+            message.Text = e.Message;
 
 
             var userName = Wiegand26Regex().Replace(e.UserName, "").Trim();
@@ -111,13 +113,14 @@ namespace GateLogger
             {
                 await db.SaveChangesAsync(CancellationToken.None);
 
-                Console.WriteLine($"{gateEvent.DateTime:G} {user.Name} {e.message} {e.ReaderName}");
+                Console.WriteLine($"{gateEvent.DateTime:G} {user.Name} {e.Message} {e.ReaderName}");
 
                 //_logger.LogInformation(message: e.message);
             }
+
             catch (Exception exception)
             {
-                Console.WriteLine(exception.InnerException.Message);
+                Console.WriteLine(exception.InnerException!.Message);
             }
         }
 

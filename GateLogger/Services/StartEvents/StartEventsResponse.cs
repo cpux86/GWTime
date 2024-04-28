@@ -8,6 +8,6 @@ namespace GateLogger.Services.StartEvents
         public string Command { get; set; } = string.Empty;
 
         [JsonPropertyName("event")]
-        public EventResponse? _event { get; set; }
+        public EventResponse? Event { get; set; }
     }
 }
