@@ -36,7 +36,7 @@ namespace Api.BotControllers.Dialog
 
             option.MenuReplyKeyboardMarkup = menu;
 
-            update.RegisterStepHandler(new StepTelegram(SelectPeriod, new ReportCache()));
+            update.RegisterStepHandler(new StepTelegram(SelectPeriod, new CreateReportCache()));
 
             await PRTelegramBot.Helpers.Message.Send(client, update, msg, option);
             await PRTelegramBot.Helpers.Message.DeleteChat(client, update.Message.Chat.Id, update.Message.MessageId);
@@ -75,7 +75,7 @@ namespace Api.BotControllers.Dialog
             };
             
             var handler = update.GetStepHandler<StepTelegram>();
-            handler.GetCache<ReportCache>().Text = update.Message.Text;
+            handler.GetCache<CreateReportCache>().Text = update.Message.Text;
             handler.RegisterNextStep(SelectReader, DateTime.Now.AddMinutes(5));
 
 
@@ -92,7 +92,7 @@ namespace Api.BotControllers.Dialog
         public async Task SelectReader(ITelegramBotClient client, Update update)
         {
             var handler = update.GetStepHandler<StepTelegram>();
-            var cache = handler.GetCache<ReportCache>();
+            var cache = handler.GetCache<CreateReportCache>();
             // ✅
             menuList.Find(e => e.Text == update.Message.Text).Text = $"✅ {update.Message.Text}";
 

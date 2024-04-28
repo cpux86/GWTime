@@ -1,15 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
+﻿using GateLogger.Services.StartEvents;
 using System.Net.Sockets;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
-using GateLogger.Services.StartEvents;
-using Microsoft.Extensions.FileSystemGlobbing.Internal;
 using TcpClient = NetCoreServer.TcpClient;
 
 namespace GateLogger.Services
@@ -17,15 +9,19 @@ namespace GateLogger.Services
     public class GateTcpClient : TcpClient
     {
         private const int _port = 1917;
+        private bool _stop;
 
         public GateTcpClient(string address) : base(address, _port)
         {
         }
-        public delegate Task AsyncEventHandler<TEventArgs>(object? sender, TEventArgs args);
+        //public delegate Task AsyncEventHandler<TEventArgs>(object? sender, TEventArgs args);
 
-        public static event AsyncEventHandler<EventResponse> NewEventAsync = delegate { return Task.CompletedTask; };
+        //public static event AsyncEventHandler<EventResponse> NewEventAsync = delegate { return Task.CompletedTask; };
+        //public static event AsyncEventHandler<EventResponse>? NewEventAsync;
+        //public static event Func<EventResponse, Task> NewAccess; 
+        public static event Func<EventResponse, Task>? NewEvent;
 
-        public static event EventHandler<EventResponse> NewEvent = delegate {};
+        //public static event EventHandler<EventResponse> NewEvent = delegate {};
         public GateTcpClient(string address, int port) : base(address, port) { }
 
         public void DisconnectAndStop()
@@ -42,7 +38,7 @@ namespace GateLogger.Services
             //this.SendAsync(JsonSerializer.Serialize(new GetConfigCommand()));
 
             //this.Send(new byte[] { 0x0 });
-            
+
             this.SendAsync(JsonSerializer.Serialize(new StartEventsCommand()));
 
         }
@@ -84,19 +80,17 @@ namespace GateLogger.Services
                     var gateEvent = result?._event;
                     if (gateEvent == null) continue;
 
-
                     lock (gateEvent)
                     {
-                        NewEvent.Invoke(this, gateEvent);
+                        //NewEvent.Invoke(this, gateEvent);
+                        //NewEventAsync?.Invoke(this, gateEvent);
+                        NewEvent!(gateEvent);
                     }
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine(e.Message);
                 }
-
-
-                
             }
 
         }
@@ -107,6 +101,6 @@ namespace GateLogger.Services
             Console.WriteLine($"Chat TCP client caught an error with code {error}");
         }
 
-        private bool _stop;
+       
     }
 }

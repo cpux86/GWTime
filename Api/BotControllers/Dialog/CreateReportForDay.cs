@@ -23,6 +23,11 @@ using System.Data;
 using Domain;
 using File = System.IO.File;
 using System.Collections.Generic;
+using PRTelegramBot.Utils.Controls.CalendarControl.Common;
+using PRTelegramBot.Models.CallbackCommands;
+using PRTelegramBot.Models.Enums;
+using Google.Protobuf.WellKnownTypes;
+using System.IO;
 
 
 namespace Api.BotControllers.Dialog
@@ -31,16 +36,18 @@ namespace Api.BotControllers.Dialog
     {
         private readonly IReportService _report;
         private readonly IUserManager _userManager;
-        public CreateReportForDay(IReportService report, IUserManager userManager)
+        private readonly ILogger _logger;
+        public CreateReportForDay(IReportService report, IUserManager userManager, ILogger<CreateReportForDay> logger)
         {
             _report = report;
             _userManager = userManager;
+            _logger = logger;
         }
 
       
 
         //[ReplyMenuHandler("/start")]
-        //[ReplyMenuHandler("Хронос")]
+        [ReplyMenuHandler("Хронос")]
         public async Task Start(ITelegramBotClient client, Update update)
         {
             //var report = await _report.GetReportByReaders(DateTime.Parse("2024-01-01 06:00:00.00"),
@@ -83,43 +90,45 @@ namespace Api.BotControllers.Dialog
 
 
 
-            //string msg = "Выберите устройство";
-            //List<IInlineContent> menu = new List<IInlineContent>();
+            string msg = "Выберите устройство";
+            List<IInlineContent> menu = new List<IInlineContent>();
 
-            //menu.Add(new InlineCallback("Хронос", CustomTHeader.Chronos));
-            //menu.Add(new InlineCallback("Курилка № 1", CustomTHeader.Kurilka1));
-            //menu.Add(new InlineCallback("Курилка № 2", CustomTHeader.Kurilka2));
-            //menu.Add(new InlineCallback("Гальваника", CustomTHeader.Galvanika));
+            menu.Add(new InlineCallback("<b>Хронос</b>", CustomTHeader.Chronos));
+            menu.Add(new InlineCallback("Курилка № 1", CustomTHeader.Kurilka1));
+            menu.Add(new InlineCallback("Курилка № 2", CustomTHeader.Kurilka2));
+            menu.Add(new InlineCallback("Гальваника", CustomTHeader.Galvanika));
 
-            ////Генерация меню в 1 столбец
-            //var menuItems = MenuGenerator.InlineKeyboard(1, menu);
+            //Генерация меню в 1 столбец
+            var menuItems = MenuGenerator.InlineKeyboard(1, menu);
 
-            //var options = new OptionMessage();
-            //options.MenuInlineKeyboardMarkup = menuItems;
+            var options = new OptionMessage();
+            //options.ParseMode = ParseMode.Html;
+            options.MenuInlineKeyboardMarkup = menuItems;
 
 
-            //////Регистрация обработчика для последовательной обработки шагов и сохранение данных
-            //////update.RegisterStepHandler(new StepTelegram(StepOne, new StepCache()));
-            //await PRTelegramBot.Helpers.Message.Send(client, update, msg, options);
+            ////Регистрация обработчика для последовательной обработки шагов и сохранение данных
+            ////update.RegisterStepHandler(new StepTelegram(StepOne, new StepCache()));
+            await PRTelegramBot.Helpers.Message.Send(client, update, msg, options);
         }
 
 
         #region Отчет-период
 
-        [ReplyMenuHandler("Сегодня\n 00:00 - 23:59")]
+        [ReplyMenuHandler("Сегодня")]
         public async Task Today(ITelegramBotClient client, Update update)
-        {
-
+        { 
+            //client.InvokeCommonLog("Отчет за сегодня");
+            _logger.LogInformation($"{update.GetInfoUser()} запросил отчет за сегодня");
 
             var startDateTime = DateTime.Parse($"{DateTime.Now:yyyy/MM/dd} 04:00");
             var endDateTime = DateTime.Parse($"{DateTime.Now:yyyy/MM/dd} 23:59");
 
-            Stopwatch stopwatch = new Stopwatch();
-            //засекаем время начала операции
-            stopwatch.Start();
-            var gwtClient = new GWT.Client("http://localhost:55222/", new HttpClient());
+            //Stopwatch stopwatch = new Stopwatch();
+            ////засекаем время начала операции
+            //stopwatch.Start();
+            //var gwtClient = new GWT.Client("http://localhost:55222/", new HttpClient());
 
-            var gwtReport = await gwtClient.TrackingAsync(startDateTime.AddDays(-200), endDateTime);
+            //var gwtReport = await gwtClient.TrackingAsync(startDateTime.AddDays(-1), endDateTime);
             //foreach (var user in gwtReport.OrderBy(e=>e.Name))
             //{
 
@@ -131,9 +140,9 @@ namespace Api.BotControllers.Dialog
             //}
 
 
-            stopwatch.Stop();
-            //смотрим сколько миллисекунд было затрачено на выполнение
-            Console.WriteLine(stopwatch.ElapsedMilliseconds);
+            //stopwatch.Stop();
+            ////смотрим сколько миллисекунд было затрачено на выполнение
+            //Console.WriteLine(stopwatch.ElapsedMilliseconds);
             var res = await _report.GetReportByReaders(startDateTime, endDateTime, new List<int> { 141, 87 }, new List<int>() { 142, 88 });
 
             var usrList = res.Workers.Where(e => e.WorkTimes.Count > 0).ToList();
@@ -154,12 +163,12 @@ namespace Api.BotControllers.Dialog
 
         }
 
-        [ReplyMenuHandler("Вчера\n 04:00 + 30 часов")]
+        [ReplyMenuHandler("Вчера")]
         public async Task Yesterday(ITelegramBotClient client, Update update)
         {
-            Stopwatch stopwatch = new Stopwatch();
-            //засекаем время начала операции
-            stopwatch.Start();
+            //Stopwatch stopwatch = new Stopwatch();
+            ////засекаем время начала операции
+            //stopwatch.Start();
 
             var startDateTime = DateTime.Parse($"{DateTime.Now.AddDays(-1):yyyy/MM/dd} 04:00");
             //var endDateTime = DateTime.Parse($"{DateTime.Now:yyyy/MM/dd} 23:59");
@@ -172,9 +181,9 @@ namespace Api.BotControllers.Dialog
             var test = usrList.GroupBy(e => e.Group.Name).Select(e => new Group() { Name = e.Key, Workers = e.ToList() })
                 .ToList();
 
-            stopwatch.Stop();
-            //смотрим сколько миллисекунд было затрачено на выполнение
-            Console.WriteLine(stopwatch.ElapsedMilliseconds);
+            //stopwatch.Stop();
+            ////смотрим сколько миллисекунд было затрачено на выполнение
+            //Console.WriteLine(stopwatch.ElapsedMilliseconds);
 
             foreach (var t in test)
             {
@@ -228,10 +237,12 @@ namespace Api.BotControllers.Dialog
         {
             var startTime = TimeSpan.Parse("06:00");
             var endTime = TimeSpan.Parse("10:00");
-            Stopwatch stopwatch = new Stopwatch();
-            //засекаем время начала операции
-            stopwatch.Start();
+            //Stopwatch stopwatch = new Stopwatch();
+            ////засекаем время начала операции
+            //stopwatch.Start();
+            
 
+            
 
             var now = DateTime.Now;
             // Отчетная дата - начало каждого месяца. Это первое число плюс время
@@ -246,9 +257,9 @@ namespace Api.BotControllers.Dialog
             var test = usrList.GroupBy(e => e.Group.Name).Select(e => new Group() { Name = e.Key, Workers = e.ToList() })
                 .ToList();
 
-            stopwatch.Stop();
-            //смотрим сколько миллисекунд было затрачено на выполнение
-            Console.WriteLine(stopwatch.ElapsedMilliseconds);
+            //stopwatch.Stop();
+            ////смотрим сколько миллисекунд было затрачено на выполнение
+            //Console.WriteLine(stopwatch.ElapsedMilliseconds);
 
             foreach (var t in test)
             {
@@ -264,6 +275,10 @@ namespace Api.BotControllers.Dialog
         [ReplyMenuHandler("Текущий месяц")]
         public async Task CurrentMonthReport(ITelegramBotClient client, Update update)
         {
+            //Stopwatch stopwatch = new Stopwatch();
+            ////засекаем время начала операции
+            //stopwatch.Start();
+
             var startTime = TimeSpan.Parse("06:00");
             var now = DateTime.Now;
             // тачало текущего месяца
@@ -281,7 +296,18 @@ namespace Api.BotControllers.Dialog
                 var msg = new StringBuilder();
                 msg.Append($"<b>#⃣ {t.Name} #⃣</b>\n\r");
                 msg.AppendJoin("\n", t.Workers.Select(e => e.Name = $"🙎‍♂️ {e.Name} 👉 {e.TotalTime}").OrderBy(e => e));
-                var sendMessage = await PRTelegramBot.Helpers.Message.Send(client, update, msg.ToString());
+
+
+                //var calendarMarkup = Markup.Calendar(DateTime.Today, dtfi);
+                
+                //var option = new OptionMessage();
+                //option.MenuInlineKeyboardMarkup = calendarMarkup;
+                //await PRTelegramBot.Helpers.Message.Send(client, update.GetChatId(), msg.ToString(), option);
+
+
+
+                //Console.WriteLine(stopwatch.ElapsedMilliseconds);
+                var sendMessage = PRTelegramBot.Helpers.Message.Send(client, update, msg.ToString());
             }
         }
         #endregion
@@ -293,15 +319,15 @@ namespace Api.BotControllers.Dialog
 
         #region Users
 
-        [ReplyMenuHandler("/users")]
-        public async Task GetUser(ITelegramBotClient client, Update update)
-        {
+        //[SlashHandler("/users")]
+        //public async Task GetUser(ITelegramBotClient client, Update update)
+        //{
 
-            var user = await _userManager.GetUserByName("Акс");
-            string msg = $"/{user.Id} {user.Name}";
+        //    var user = await _userManager.GetUserByNameAsync("Акс");
+        //    string msg = $"/{user.Id} {user.Name}";
 
-            await PRTelegramBot.Helpers.Message.Send(client, update, msg);
-        }
+        //    await PRTelegramBot.Helpers.Message.Send(client, update, msg);
+        //}
 
         [SlashHandler("/userList")]
         public async Task GetUserList(ITelegramBotClient client, Update update)
@@ -395,7 +421,8 @@ namespace Api.BotControllers.Dialog
         [ReplyMenuHandler("Главное меню", "/start")]
         public async Task MainMenu(ITelegramBotClient client, Update update)
         {
-            
+            //client.InvokeCommonLog("Простой лог");
+            //Console.WriteLine(update.GetInfoUser());
             string msg = "Главное меню";
             //Создаем настройки сообщения
             var option = new OptionMessage();
@@ -418,6 +445,8 @@ namespace Api.BotControllers.Dialog
             await PRTelegramBot.Helpers.Message.DeleteChat(client, update.Message.Chat.Id, update.Message.MessageId);
         }
 
+        public static DateTimeFormatInfo dtfi = CultureInfo.GetCultureInfo("ru-RU", false).DateTimeFormat;
+
         [ReplyMenuHandler("Устройства")]
         public async Task ReportMenu(ITelegramBotClient client, Update update)
         {
@@ -438,9 +467,47 @@ namespace Api.BotControllers.Dialog
 
             option.MenuReplyKeyboardMarkup = menu;
 
-            await PRTelegramBot.Helpers.Message.Send(client, update, msg, option);
+            var calendarMarkup = Markup.Calendar(DateTime.Today, dtfi);
+            var option1 = new OptionMessage();
+            option1.MenuInlineKeyboardMarkup = calendarMarkup;
+
+           
+            await PRTelegramBot.Helpers.Message.Send(client, update.GetChatId(), $"Выберите дату    11111111111111:", option1);
+            
+            //await PRTelegramBot.Helpers.Message.Send(client, update, msg, option);
 
         }
+
+
+        ///// <summary>
+        ///// Выбор года
+        ///// </summary>
+        //[InlineCallbackHandler<THeader>(THeader.PickDate)]
+        //public static async Task PickYear(ITelegramBotClient botClient, Update update)
+        //{
+        //    try
+        //    {
+        //        var command = InlineCallback<CalendarTCommand>.GetCommandByCallbackOrNull(update.CallbackQuery.Data);
+        //        if (command != null)
+        //        {
+        //            var monthYearMarkup = Markup.Calendar(DateTime.Today, dtfi);
+        //            var option = new OptionMessage();
+                    
+        //            option.MenuInlineKeyboardMarkup = monthYearMarkup;
+        //            //await PRTelegramBot.Helpers.Message.EditInline(botClient, update.CallbackQuery.Message.Chat.Id, update.CallbackQuery.Message.MessageId, option);
+        //            await PRTelegramBot.Helpers.Message.Edit(botClient, update.CallbackQuery.Message.Chat.Id,
+        //                update.CallbackQuery.Message.MessageId, $"Вы выбрали: {command.Data.Date.ToString()}", option);
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        //Обработка исключения
+        //    }
+        //}
+
+
+
+
 
         //[ReplyMenuHandler("Хронос")]
         //[ReplyMenuHandler("Отчет")]
@@ -474,9 +541,10 @@ namespace Api.BotControllers.Dialog
 
         //}
 
-        [ReplyMenuHandler("👷‍♂️Кто на работе")]
+        [ReplyMenuHandler("👷‍♂️Кто на работе", "/whoshere")]
         public async Task Whoshere(ITelegramBotClient client, Update update)
         {
+           
             //await Task.Delay(60000);
 
             //await _report.CurrentWorkerList();
@@ -492,13 +560,17 @@ namespace Api.BotControllers.Dialog
             //    msg.AppendJoin("\n", t.Workers.Select(e => e.Name = $"🙎‍♂️ {e.Name} 👉 {e.TotalTime}"));
             //    var sendMessage = await PRTelegramBot.Helpers.Message.Send(client, update, msg.ToString());
             //}
-            var sendMessage = await PRTelegramBot.Helpers.Message.Send(client, update, "Тестовое сообщение");
-            await PRTelegramBot.Helpers.Message.SendFile(client, update.GetChatId(), "Tracking", $"\\\\10.65.68.210\\Export2\\Tmp\\Ролик ERP.xlsx");
+            var workersToday = await _report.GetWorkersTodayAsync();
+            var msg = new StringBuilder();
+            var m = msg.AppendJoin("\n", workersToday.Select(e=>$"👷‍♂️[{e.UserGroup.Id}] {e.Name}"));
+            //var sendMessage = await PRTelegramBot.Helpers.Message.Send(client, update, "Функция не реализована");
+            var sendMessage = await PRTelegramBot.Helpers.Message.Send(client, update, m.ToString());
+            //await PRTelegramBot.Helpers.Message.SendFile(client, update.GetChatId(), "Tracking", $"\\\\10.65.68.210\\Export2\\Tmp\\Ролик ERP.xlsx");
         }
 
 
         #region Tracking
-        [ReplyMenuHandler("Трекинг")]
+        //[ReplyMenuHandler("Трекинг")]
         public async Task Tracking(ITelegramBotClient client, Update update)
         {
             
@@ -556,7 +628,7 @@ namespace Api.BotControllers.Dialog
                     //Console.WriteLine(user.Name);
                     foreach (var evt in user.Events)
                     {
-                        //Console.WriteLine($"{group.Key} {user.Name} {evt.DateTime} {evt.Reader.Name} {evt.Message.Text}");
+                        //Console.WriteLine($"{group.Key} {user.Name} {evt.DateTime} {evt.Reader.Name} {evt.Message.FullName}");
                     }
                 }
             }
@@ -594,11 +666,68 @@ namespace Api.BotControllers.Dialog
 
 
 
-
-
-
-
         [ReplyMenuHandler("Другое")]
+        public async Task OtherPeriod(ITelegramBotClient client, Update update)
+        {
+
+            update.RegisterStepHandler(new StepTelegram(PeriodStep, new CreateReportCache()));
+
+            
+
+            await PRTelegramBot.Helpers.Message.Send(client, update, "Укажите пожалуйста период в формате ДДММГГГГ - ДДММГГГГ");
+        }
+
+
+
+        public  async Task PeriodStep(ITelegramBotClient client, Update update)
+        {
+            if (update.Message != null)
+            {
+                var periodText = update.Message.Text;
+                var date = periodText.TrimEnd().Replace(" ", "").Split("-");
+                DateTime start;
+                DateTime end;
+                if (date.Length == 2 && DateTime.TryParse(date[0], out start) && DateTime.TryParse(date[1], out end))
+                {
+                    if (end > start) Console.WriteLine(date.ToString());
+                   
+                    var res = await _report.GetReportByReaders(start.AddHours(6), end.AddHours(10), new List<int> { 141}, new List<int>() { 142});
+                    var usrList = res.Workers.Where(e => e.WorkTimes.Count > 0).ToList();
+                    var test = usrList.GroupBy(e => e.Group.Name).Select(e => new Group() { Name = e.Key, Workers = e.ToList() })
+                        .ToList();
+
+
+                    foreach (var t in test)
+                    {
+                        var msg = new StringBuilder();
+                        msg.Append($"<b>#⃣ {t.Name} #⃣</b>\n\r");
+                        msg.AppendJoin("\n", t.Workers.Select(e => e.Name = $"🙎‍♂️ {e.Name} 👉 {e.TotalTime}").OrderBy(e => e));
+
+
+                        //var calendarMarkup = Markup.Calendar(DateTime.Today, dtfi);
+
+                        //var option = new OptionMessage();
+                        //option.MenuInlineKeyboardMarkup = calendarMarkup;
+                        //await PRTelegramBot.Helpers.Message.Send(client, update.GetChatId(), msg.ToString(), option);
+
+
+
+                        //Console.WriteLine(stopwatch.ElapsedMilliseconds);
+                        var sendMessage = PRTelegramBot.Helpers.Message.Send(client, update, msg.ToString());
+                    }
+
+                }
+               
+                
+
+            }
+            
+
+        }
+
+
+
+        //[ReplyMenuHandler("Другое")]
         public async Task Test(ITelegramBotClient client, Update update)
         {
             await PRTelegramBot.Helpers.Message.Send(client, update, "Обработка запроса...");
@@ -615,7 +744,7 @@ namespace Api.BotControllers.Dialog
             Stopwatch stopwatch = new Stopwatch();
             //засекаем время начала операции
             stopwatch.Start();
-            var res = await _report.GetReportByReaders(startDateTime, endDateTime, new List<int> { 141, 87 }, new List<int>() { 142, 88 });
+            var res = await _report.GetReportByReaders(startDateTime, endDateTime, new List<int> { 141, 87, 110 }, new List<int>() { 142, 88, 109 });
             stopwatch.Stop();
             var usrList = res.Workers.Where(e => e.WorkTimes.Count > 0).ToList();
             var test = usrList.GroupBy(e => e.Group.Name)
@@ -627,8 +756,11 @@ namespace Api.BotControllers.Dialog
             //смотрим сколько миллисекунд было затрачено на выполнение
             Console.WriteLine(stopwatch.ElapsedMilliseconds);
             var sendMessage = await PRTelegramBot.Helpers.Message.Send(client, update, "Подготовка документа к отправке");
-            var workbook = new Workbook();
+
+            using var workbook = new Workbook();
+            
             workbook.Version = ExcelVersion.Version2016;
+          
             workbook.Worksheets.Clear();
             //var worksheet = workbook.Worksheets.Add("Отчет за месяц");
             //CellStyle style = workbook.Styles.Add("newStyle");
@@ -642,7 +774,8 @@ namespace Api.BotControllers.Dialog
             //dataTable.Columns.Add("Время работы", typeof(string));
 
             var quickReportWorksheet = workbook.Worksheets.Add("Краткий отчет");
-            var quickReportTable = new DataTable();
+            using var quickReportTable = new DataTable();
+            
             
             quickReportTable.Columns.Add("Ф.И.О.", typeof(string));
             quickReportTable.Columns.Add("Итого", typeof(string));
@@ -710,8 +843,22 @@ namespace Api.BotControllers.Dialog
             quickReportWorksheet.Range[1, 1, 1, 3].Style.Font.IsBold = true;
             var start = res.Start.ToString("d");
             var end = res.End.ToString("d");
-            workbook.SaveToFile($"Report_{start}_{end}.xlsx", ExcelVersion.Version2016);
-            await PRTelegramBot.Helpers.Message.SendFile(client, update.GetChatId(), "Отчет", $"Report_{start}_{end}.xlsx");
+            //workbook.SaveToFile($"Report_{start}_{end}.xlsx", ExcelVersion.Version2016);
+
+
+
+            using var ms = new MemoryStream();
+            workbook.SaveToStream(ms, FileFormat.Version2016);
+            ms.Seek(0, SeekOrigin.Begin);
+
+            //var file = InputFile.FromStream(ms, $"fullReport {start}-{end}.xlsx");
+            var file = InputFile.FromStream(ms, $"отчет за {res.Start:Y}.xlsx");
+
+            var send = await client.SendDocumentAsync(update.GetChatId(), file);
+
+            //stream.Close();
+            //workbook.SaveToStream();
+            //await PRTelegramBot.Helpers.Message.SendFile(client, update.GetChatId(), "Отчет", $"Report_{start}-{end}.xlsx");
 
         }
 

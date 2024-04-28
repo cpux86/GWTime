@@ -10,16 +10,21 @@
 
   <ItemGroup>
     <Compile Remove="Admin\**" />
+    <Compile Remove="BotControllers\Enums\**" />
     <Compile Remove="Protos\**" />
     <Content Remove="Admin\**" />
+    <Content Remove="BotControllers\Enums\**" />
     <Content Remove="Protos\**" />
     <EmbeddedResource Remove="Admin\**" />
+    <EmbeddedResource Remove="BotControllers\Enums\**" />
     <EmbeddedResource Remove="Protos\**" />
     <None Remove="Admin\**" />
+    <None Remove="BotControllers\Enums\**" />
     <None Remove="Protos\**" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Ardalis.Specification" Version="8.0.0" />
     <PackageReference Include="FreeSpire.XLS" Version="12.7.0" />
     <PackageReference Include="Google.Protobuf" Version="3.24.3" />
     <PackageReference Include="Grpc" Version="2.46.6" />
@@ -39,9 +44,12 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="7.0.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.4" />
+    <PackageReference Include="NLog.Extensions.Logging" Version="5.3.8" />
     <PackageReference Include="PRTelegramBot" Version="0.5.5" />
     <PackageReference Include="RabbitMQ.Client" Version="6.5.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+    <PackageReference Include="Telegram.Bot" Version="19.0.0" />
+    <None Update="nlog.config" CopyToOutputDirectory="Always" />
   </ItemGroup>
 
   <ItemGroup>
@@ -51,7 +59,6 @@
 
   <ItemGroup>
     <Folder Include="BotControllers\MenuHandlers\" />
-    <Folder Include="BotControllers\Enums\" />
   </ItemGroup>
 
 </Project>

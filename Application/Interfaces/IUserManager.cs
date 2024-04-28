@@ -9,7 +9,8 @@ namespace Application.Interfaces
 {
     public interface IUserManager
     {
-        public Task<User> GetUserByName(string username);
+        public Task<List<User>> GetUserByNameAsync(string username);
+        public Task<User> GetUserByIdAsync(int userId);
 
         public Task<List<User>> GetUserListAsync();
 

@@ -26,6 +26,23 @@ namespace Domain
         /// Группа в которую входит сотрудник
         /// </summary>
         public UserGroup? UserGroup { get; set; }
+        /// <summary>
+        /// Возвращает список дат рабочих дней  
+        /// </summary>
+        /// <returns></returns>
+        public List<DateTime> GetWorkingDaysList()
+        {
+            var dateTimes = this.Events!.GroupBy(e=>e.DateTime.Date).Select(e=>e.Key).ToList();
+            return dateTimes;
+        }
+
+        //public void GetLastUseKey()
+        //{
+        //    var orderedEnumerable = Events.OrderBy(e => e.DateTime).Select(e=> new Event()
+        //    {
+
+        //    })
+        //}
 
     }
 }

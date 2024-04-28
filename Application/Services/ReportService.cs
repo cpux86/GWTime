@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
@@ -62,8 +63,65 @@ namespace Application.Services
         }
 
 
+        public async Task<List<User>> GetWorkersTodayAsync()
+        {
+            var users = await _dbContext.Events
+                .AsNoTracking()
+                .Where(e => e.DateTime > DateTime.Today && e.MessageId == 2)
+                .Where(e => e.Reader.Id == 87 || e.Reader.Id == 141)
+                .Include(e => e.User).ThenInclude(u => u.UserGroup)
+                .Select(e => e.User).OrderBy(e => e.UserGroup.Id).ThenBy(e => e.Name)
+
+                .ToListAsync(CancellationToken.None);
+
+            var t = users.DistinctBy(e => e.Name).ToList();
+            return t;
+        }
+
+
+        // последнее 
+        public async Task<Event> GetLastUseKey(int userId)
+        {
+            
+            var events = await _dbContext.Events
+                .AsNoTracking()
+                .Include(e=>e.Reader)
+                .OrderBy(e => e.DateTime)
+                //.Where(e => e.UserId == userId)
+                .Select(e => new Event() {User = e.User, Reader = e.Reader, DateTime = e.DateTime, Message = e.Message  })
+                
+                .LastOrDefaultAsync(e => e.User.Id == userId, CancellationToken.None);
+            //return events.DateTime;
+            return events;
+        }
+
         public async Task<Report> GetReportByReaders(DateTime startDate, DateTime endDate, List<int> inputReader, List<int> outputReader, int messageId = 2)
         {
+
+
+
+            //var t1 = await _dbContext.Events
+            //    .Where(e => e.User.Id == 5)
+            //    .GroupBy(e => e.DateTime.Date)
+            //    .Select(e => new { Date = e.Key, Count = e.Count() })
+            //    .OrderByDescending(e => e.Date)
+            //    .ToListAsync(CancellationToken.None);
+
+            //var user1 = await _dbContext.Users
+            //    .Include(e => e.Events!.Where(e => e.DateTime >= startDate && e.DateTime <= endDate))
+            //    .ToListAsync(CancellationToken.None);
+            //    //.FirstOrDefaultAsync(u => u.Id == 3390);
+            //    foreach (var u in user1)
+            //    {
+            //        Console.WriteLine(u.Name);
+            //        foreach (var dt in u.GetWorkingDaysList().Order())
+            //        {
+            //            Console.WriteLine(dt);
+            //        }
+            //    }
+            //var workingDaysList = user1.GetWorkingDaysList();
+            //await GetLastUseKey(5);
+
             Stopwatch stopwatch = new Stopwatch();
             //засекаем время начала операции
             stopwatch.Start();
@@ -79,7 +137,11 @@ namespace Application.Services
 
             stopwatch.Stop();
             //смотрим сколько миллисекунд было затрачено на выполнение
-            Console.WriteLine(stopwatch.ElapsedMilliseconds);
+            //Console.WriteLine(stopwatch.ElapsedMilliseconds);
+
+            //var g = usersList.GroupBy(e => e.UserGroup.Name)
+            //    .Select(e => new UserGroup() { Name = e.Key, Users = e.ToList() }).ToList();
+
 
             var report = new Report
             {
@@ -90,6 +152,12 @@ namespace Application.Services
 
             foreach (var user in usersList)
             {
+                //Console.WriteLine(user.FullName);
+                //foreach (var dt in user.GetWorkingDaysList())
+                //{
+                   
+                //    Console.WriteLine(dt.ToString("G"));
+                //}
 
                 var worker = new Worker();
                 worker.Group = new Group
@@ -112,7 +180,7 @@ namespace Application.Services
                         };
                         worker.WorkTimes.Add(v);
                     }
-                    //else if(inputReader.Exists(x => x == pre.ReaderId))
+                    //else if (inputReader.Exists(x => x == pre.ReaderId))
                     //{
                     //    var v = new WorkTime(pre.DateTime, evt.DateTime)
                     //    {
@@ -150,35 +218,36 @@ namespace Application.Services
         /// <returns></returns>
         public async Task<List<User>> GetUserListWithEventsByDateRange(DateTime startDate, DateTime endDate)
         {
+            var userList = await _dbContext.Events
+                .AsNoTracking()
+                .Include(e=>e.User)
+                .Where(e => e.DateTime >= startDate && e.DateTime <= endDate)
+                .GroupBy(e=>e.User).Select(e=>e.Key)
+                .OrderBy(e=>e.Name)
+                .ToListAsync(CancellationToken.None);
+
+            return userList;
 
 
             //var usersList = await _dbContext.Users
-            //    .AsNoTracking()
-            //    .Include(t => t.Events)!.ThenInclude(e => e.Message)
-            //    .Include(t => t.Events)!.ThenInclude(e => e.Reader)
-            //    .Include(e => e.UserGroup).Take(1)
-            //    .ToListAsync(CancellationToken.None);
+            //        .AsNoTracking()
+            //        .Include(t => t.Events)!.ThenInclude(e => e.Message)
+            //        .Include(t => t.Events)!.ThenInclude(e => e.Reader)
+            //        .Include(e => e.UserGroup)
+
+            //    .Select(e => new User()
+            //    {
+            //        Id = e.Id,
+            //        Name = e.Name,
+            //        FullName = e.FullName,
+            //        UserGroup = e.UserGroup,
+            //        Events = e.Events
+            //            .Where(e => e.DateTime >= startDate && e.DateTime <= endDate)
+            //            .ToList()
+            //    })
+            //        .ToListAsync(CancellationToken.None);
+            //var u = usersList.Where(u=>u.Id == 3963).ToList();
             //return usersList;
-
-
-            var usersList = await _dbContext.Users
-                    .AsNoTracking()
-                    .Include(t => t.Events)!.ThenInclude(e => e.Message)
-                    .Include(t => t.Events)!.ThenInclude(e => e.Reader)
-                    .Include(e => e.UserGroup)
-
-                .Select(e => new User()
-                {
-                    Id = e.Id,
-                    Name = e.Name,
-                    FullName = e.FullName,
-                    UserGroup = e.UserGroup,
-                    Events = e.Events!
-                        .Where(e => e.DateTime >= startDate && e.DateTime <= endDate)
-                        .ToList()
-                })
-                    .ToListAsync(CancellationToken.None);
-            return usersList;
         }
 
 
@@ -217,15 +286,18 @@ namespace Application.Services
             
         }
 
-
-
-        public async Task TrackingByUserIdAndDateAsync(List<WorkingDays> workingDays)
+        public async Task<List<Event>> TrackingByUserIdAndDateAsync(int userId, DateTime dateTime)
         {
             var tackPoints = await _dbContext.Events
                 .AsNoTracking()
-                .Where(e=>e.User.Id == 5)
+                .Include(e=>e.User)
+                .Include(e=>e.Reader)
+                .Where(e=>e.UserId == userId)
+                .Where(e=>e.MessageId == 2)
+                .Where(e=>e.DateTime >= dateTime && e.DateTime <= dateTime.AddDays(1))
                 .ToListAsync(CancellationToken.None);
-                
+            return tackPoints;
+
         }
     }
 }

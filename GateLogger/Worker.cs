@@ -1,21 +1,13 @@
-using System.Globalization;
-using System.Net;
-using System.Runtime.CompilerServices;
+using Domain;
+using GateLogger.Infrastructure;
 using GateLogger.Services;
-using NetCoreServer;
+using GateLogger.Services.StartEvents;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
-using GateLogger.Infrastructure;
-using Domain;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.Extensions.DependencyInjection;
-using GateLogger.Services.StartEvents;
-using Microsoft.VisualBasic;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore.Internal;
-using System.Text.Json;
+
 namespace GateLogger
 {
     public partial class Worker : BackgroundService
@@ -37,15 +29,6 @@ namespace GateLogger
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
 
-            //while (!stoppingToken.IsCancellationRequested)
-            //{
-            //    Console.WriteLine(1);
-            //}
-
-
-
-
-
             var serverValue = _configuration.GetSection("GateServer").Value;
 
             var addressList = serverValue?.Split(";", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -64,14 +47,13 @@ namespace GateLogger
                     client.ConnectAsync();
 
                 }
-
             GateTcpClient.NewEvent += NewEventHandler;
-            await Task.CompletedTask;
+            //await Task.CompletedTask;
 
         }
 
 
-        private static void NewEventHandler(object? sender, EventResponse e)
+        private async Task NewEventHandler(EventResponse e)
         {
             if (e.UserId == 0)
             {
@@ -79,10 +61,10 @@ namespace GateLogger
                 return;
             }
 
-            using var db = new EventsDbContext();
+            await using var db = new EventsDbContext();
 
             // тип события
-            var message = db.Messages.FirstOrDefault(m => m.Id == e.EventCode) ??
+            var message = await db.Messages.FirstOrDefaultAsync(m => m.Id == e.EventCode) ??
                           new Message { Id = (byte)e.EventCode, Text = e.message };
             message.Text = e.message;
 
@@ -91,7 +73,7 @@ namespace GateLogger
             // извлекаем номер ключа
             var key = Wiegand26Regex().Match(e.UserName).Value;
 
-            var reader = db.Readers.FirstOrDefault(r => r.Id == (short)e.ReaderId) ?? new Reader { Id = (short)e.ReaderId, Name = e.ReaderName };
+            var reader = await db.Readers.FirstOrDefaultAsync(r => r.Id == (short)e.ReaderId) ?? new Reader { Id = (short)e.ReaderId, Name = e.ReaderName };
             reader.Name = e.ReaderName;
             // если пользователю не присвоена группа, то помещаем его в группу "Без группы"
             if (e.Group == string.Empty)
@@ -99,13 +81,13 @@ namespace GateLogger
                 e.Group = "Без группы";
             }
 
-            var group = db.UserGroups.FirstOrDefault(g => g.Name == e.Group) ?? new UserGroup { Name = e.Group };
+            var group = await db.UserGroups.FirstOrDefaultAsync(g => g.Name == e.Group) ?? new UserGroup { Name = e.Group };
             if (group.Id == 0)
             {
                 db.UserGroups.Add(group);
             }
 
-            var user = db.Users.FirstOrDefault(u => u.Id == e.UserId) ?? new User { Id = e.UserId, FullName = e.FullName, Name = userName };
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Id == e.UserId) ?? new User { Id = e.UserId, FullName = e.FullName, Name = userName };
 
             user.Name = userName;
             user.FullName = e.FullName;
@@ -127,9 +109,10 @@ namespace GateLogger
 
             try
             {
-                db.SaveChanges();
+                await db.SaveChangesAsync(CancellationToken.None);
 
                 Console.WriteLine($"{gateEvent.DateTime:G} {user.Name} {e.message} {e.ReaderName}");
+
                 //_logger.LogInformation(message: e.message);
             }
             catch (Exception exception)

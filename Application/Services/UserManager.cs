@@ -5,50 +5,90 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Application.Interfaces;
+using Application.Specification;
+using Ardalis.Specification.EntityFrameworkCore;
+//using Ardalis.Specification.EntityFrameworkCore;
 using Domain;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
 
 namespace Application.Services
 {
     public class UserManager : IUserManager
     {
-        private readonly IEventsDbContext context;
+        private readonly IEventsDbContext _context;
 
         public UserManager(IEventsDbContext dbContext)
         {
-            context = dbContext;
+            _context = dbContext;
         }
 
+
+        /// <summary>
+        /// Список групп
+        /// </summary>
+        /// <returns></returns>
         public async Task<List<UserGroup>> GetGroupsListAsync()
         {
-            var groups = await context.UserGroups
+            var groups = await _context.UserGroups
                 .AsNoTracking()
                 .ToListAsync(CancellationToken.None);
             return groups;
         }
 
-        public async Task<User> GetUserByName(string username)
+        /// <summary>
+        /// Поиск по фамилии
+        /// </summary>
+        /// <param name="username"></param>
+        /// <returns></returns>
+        public async Task<List<User>> GetUserByNameAsync(string username)
         {
-            var user = await context.Users
-                .AsNoTracking()
-                .Where(u => u.Name.StartsWith(username))
-                .OrderBy(u=>u.Name)
+
+
+            var test = await _context.Users.WithSpecification(new UserByIdSpec(3390))
                 .FirstOrDefaultAsync(CancellationToken.None);
-            return user;
+
+            var users = await _context.Users
+                .AsNoTracking()
+                .Include(e => e.Events)
+                .Include(u => u.UserGroup)
+                .Where(u => u.Name.StartsWith(username) || u.FullName.StartsWith(username))
+                .OrderBy(u => u.Name).ToListAsync(CancellationToken.None);
+            return users;
         }
 
+
+        public async Task<User> GetUserByIdAsync(int userId)
+        {
+            return await _context.Users
+                .AsNoTracking()
+                .Include(e => e.Events)
+                .Include(u => u.UserGroup)
+                .Where(u => u.Id == userId)
+                .FirstOrDefaultAsync(CancellationToken.None) ?? throw new Exception("пользователь не найден");
+            //return user;
+        }
+
+        /// <summary>
+        /// Возвращает список всех сотрудников 
+        /// </summary>
+        /// <returns></returns>
         public async Task<List<User>> GetUserListAsync()
         {
-            var users = await context.Users
+            var users = await _context.Users
                 .AsNoTracking()
                 .OrderBy(u=>u.Name)
                 .ToListAsync(CancellationToken.None);
             return users;
         }
-
+        /// <summary>
+        /// Список всех сотрудников в группе 
+        /// </summary>
+        /// <param name="groupId">ID группы</param>
+        /// <returns></returns>
         public async Task<List<User>> GetUserListByGroupIdAsync(int groupId)
         {
-            var users = await context.Users
+            var users = await _context.Users
                 .AsNoTracking()
                 .Where(u=>u.UserGroup.Id == groupId)
                 .OrderBy(u=>u.UserGroup.Id)

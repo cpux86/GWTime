@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using Domain;
 using System.Text.Json.Serialization;
-using System.Text.RegularExpressions.Generated;
-using System.Threading.Tasks;
-using Domain;
 
 namespace GateLogger.Services.StartEvents
 {

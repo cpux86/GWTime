@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace GateLogger.Services.StartEvents
+﻿namespace GateLogger.Services.StartEvents
 {
     public class GetConfigCommand
     {

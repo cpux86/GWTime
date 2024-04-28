@@ -43,11 +43,8 @@ namespace Application.DTOs
 
     public class Worker 
     {
-        //double _total => WorkTimes.Sum(e => e.Total.TotalHours);
-
         private TimeSpan _total => TimeSpan.FromHours(WorkTimes.Sum(e => e.Total.TotalHours));
         
-
         public string Name { get; set; } = string.Empty;
         public string FullName { get; set; } = string.Empty;
 
@@ -55,7 +52,6 @@ namespace Application.DTOs
         public Group? Group { get; set; }
 
         [JsonPropertyName("total")]
-        //public string TotalTime => $"{(int)_total:00}:{(((_total - (int)_total)) * 60):00}";
         public string TotalTime => $"{(int)_total.TotalHours:00}:{_total.Minutes:00}";
 
         [JsonPropertyName("details")]

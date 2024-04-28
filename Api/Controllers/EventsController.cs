@@ -54,7 +54,7 @@ namespace Api.Controllers
             Console.WriteLine();
         }
 
-        
+
 
 
 
@@ -71,7 +71,7 @@ namespace Api.Controllers
         //[Route("users/{name}")]
         //public async Task<List<User>> GetUserByNameAsync(string name)
         //{
-        //    return await _eventsService.GetUserByNameAsync(name);
+        //    return await _reportService.GetUserByNameAsync(name);
         //}
 
         //[HttpGet]

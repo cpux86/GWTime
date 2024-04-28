@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-
-namespace GateLogger.Infrastructure
+﻿namespace GateLogger.Infrastructure
 {
     public static class DependencyInjection
     {
@@ -11,7 +9,7 @@ namespace GateLogger.Infrastructure
             //services.AddSingleton<IEventsDbContext, EventsDbContext>();
             services.AddDbContextPool<EventsDbContext>(options =>
             {
-               
+
 
                 //options.UseSqlServer(@"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=tc;Integrated Security=True;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False");
 
