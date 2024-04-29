@@ -1,11 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace GateLogger.Migrations
 {
     /// <inheritdoc />
-    public partial class _1 : Migration
+    public partial class Init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -14,7 +15,7 @@ namespace GateLogger.Migrations
                 name: "Messages",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false),
+                    Id = table.Column<short>(type: "smallint", nullable: false),
                     Text = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
@@ -72,7 +73,7 @@ namespace GateLogger.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    MessageId = table.Column<int>(type: "int", nullable: false),
+                    MessageId = table.Column<short>(type: "smallint", nullable: false),
                     ReaderId = table.Column<short>(type: "smallint", nullable: false),
                     UserId = table.Column<int>(type: "int", nullable: false),
                     dateTime = table.Column<DateTime>(type: "datetime2(2)", precision: 2, nullable: false)

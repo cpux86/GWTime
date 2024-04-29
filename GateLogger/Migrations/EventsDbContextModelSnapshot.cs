@@ -35,8 +35,8 @@ namespace GateLogger.Migrations
                         .HasColumnType("datetime2(2)")
                         .HasColumnName("dateTime");
 
-                    b.Property<int>("MessageId")
-                        .HasColumnType("int");
+                    b.Property<short>("MessageId")
+                        .HasColumnType("smallint");
 
                     b.Property<short>("ReaderId")
                         .HasColumnType("smallint");
@@ -58,8 +58,8 @@ namespace GateLogger.Migrations
 
             modelBuilder.Entity("Domain.Message", b =>
                 {
-                    b.Property<int>("Id")
-                        .HasColumnType("int");
+                    b.Property<short>("Id")
+                        .HasColumnType("smallint");
 
                     b.Property<string>("Text")
                         .IsRequired()

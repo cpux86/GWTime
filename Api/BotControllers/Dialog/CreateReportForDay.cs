@@ -177,9 +177,16 @@ namespace Api.BotControllers.Dialog
 
             var res = await _report.GetReportByReaders(startDateTime, startDateTime.AddHours(30), new List<int> { 141, 87 }, new List<int>() { 142, 88 });
 
+
             var usrList = res.Workers.Where(e => e.WorkTimes.Count > 0).ToList();
             var test = usrList.GroupBy(e => e.Group.Name).Select(e => new Group() { Name = e.Key, Workers = e.ToList() })
                 .ToList();
+
+            if (test.Count == 0)
+            {
+                await PRTelegramBot.Helpers.Message.Send(client, update, "Информация за указанный период отсутствует 🤷‍♂️");
+                return;
+            }
 
             //stopwatch.Stop();
             ////смотрим сколько миллисекунд было затрачено на выполнение
@@ -561,11 +568,15 @@ namespace Api.BotControllers.Dialog
             //    var sendMessage = await PRTelegramBot.Helpers.Message.Send(client, update, msg.ToString());
             //}
             var workersToday = await _report.GetWorkersTodayAsync();
+            if (workersToday.Count == 0)
+            {
+                await PRTelegramBot.Helpers.Message.Send(client, update, "Информация за указанный период отсутствует 🤷‍♂️");
+                return;
+            }
+
             var msg = new StringBuilder();
             var m = msg.AppendJoin("\n", workersToday.Select(e=>$"👷‍♂️[{e.UserGroup.Id}] {e.Name}"));
-            //var sendMessage = await PRTelegramBot.Helpers.Message.Send(client, update, "Функция не реализована");
-            var sendMessage = await PRTelegramBot.Helpers.Message.Send(client, update, m.ToString());
-            //await PRTelegramBot.Helpers.Message.SendFile(client, update.GetChatId(), "Tracking", $"\\\\10.65.68.210\\Export2\\Tmp\\Ролик ERP.xlsx");
+            await PRTelegramBot.Helpers.Message.Send(client, update, m.ToString());
         }
 
 

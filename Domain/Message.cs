@@ -12,7 +12,7 @@ namespace Domain
     {
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         [Key]
-        public int Id { get; set; }
+        public short Id { get; set; }
         //public byte Id { get; set; }
         public string Text { get; set; } = string.Empty;
     }

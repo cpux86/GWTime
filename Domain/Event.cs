@@ -9,7 +9,7 @@ namespace Domain
         public int Id { get; set; }
 
         //[Column("eventCode")] 
-        public int MessageId { get; set; }
+        public short MessageId { get; set; }
         public Message Message { get; set; } = new();
 
         //[Column("readerId")]

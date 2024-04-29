@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GateLogger.Migrations
 {
     [DbContext(typeof(EventsDbContext))]
-    [Migration("20231217170505_1")]
-    partial class _1
+    [Migration("20240429060626_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -38,8 +38,8 @@ namespace GateLogger.Migrations
                         .HasColumnType("datetime2(2)")
                         .HasColumnName("dateTime");
 
-                    b.Property<int>("MessageId")
-                        .HasColumnType("int");
+                    b.Property<short>("MessageId")
+                        .HasColumnType("smallint");
 
                     b.Property<short>("ReaderId")
                         .HasColumnType("smallint");
@@ -61,8 +61,8 @@ namespace GateLogger.Migrations
 
             modelBuilder.Entity("Domain.Message", b =>
                 {
-                    b.Property<int>("Id")
-                        .HasColumnType("int");
+                    b.Property<short>("Id")
+                        .HasColumnType("smallint");
 
                     b.Property<string>("Text")
                         .IsRequired()
