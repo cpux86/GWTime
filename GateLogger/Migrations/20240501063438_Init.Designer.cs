@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GateLogger.Migrations
 {
     [DbContext(typeof(EventsDbContext))]
-    [Migration("20240429060626_Init")]
+    [Migration("20240501063438_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -41,6 +41,9 @@ namespace GateLogger.Migrations
                     b.Property<short>("MessageId")
                         .HasColumnType("smallint");
 
+                    b.Property<short>("MessageId1")
+                        .HasColumnType("smallint");
+
                     b.Property<short>("ReaderId")
                         .HasColumnType("smallint");
 
@@ -48,6 +51,8 @@ namespace GateLogger.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("MessageId1");
 
                     b.HasIndex("ReaderId");
 
@@ -57,6 +62,23 @@ namespace GateLogger.Migrations
                         .IsUnique();
 
                     b.ToTable("Events");
+                });
+
+            modelBuilder.Entity("Domain.Group", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Groups");
                 });
 
             modelBuilder.Entity("Domain.Message", b =>
@@ -96,42 +118,29 @@ namespace GateLogger.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("GroupId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("UserGroupId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("UserGroupId");
+                    b.HasIndex("GroupId");
 
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("Domain.UserGroup", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("UserGroups");
                 });
 
             modelBuilder.Entity("Domain.Event", b =>
                 {
                     b.HasOne("Domain.Message", "Message")
                         .WithMany()
-                        .HasForeignKey("MessageId")
+                        .HasForeignKey("MessageId1")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -156,11 +165,16 @@ namespace GateLogger.Migrations
 
             modelBuilder.Entity("Domain.User", b =>
                 {
-                    b.HasOne("Domain.UserGroup", "UserGroup")
+                    b.HasOne("Domain.Group", "Group")
                         .WithMany("Users")
-                        .HasForeignKey("UserGroupId");
+                        .HasForeignKey("GroupId");
 
-                    b.Navigation("UserGroup");
+                    b.Navigation("Group");
+                });
+
+            modelBuilder.Entity("Domain.Group", b =>
+                {
+                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("Domain.Reader", b =>
@@ -171,11 +185,6 @@ namespace GateLogger.Migrations
             modelBuilder.Entity("Domain.User", b =>
                 {
                     b.Navigation("Events");
-                });
-
-            modelBuilder.Entity("Domain.UserGroup", b =>
-                {
-                    b.Navigation("Users");
                 });
 #pragma warning restore 612, 618
         }

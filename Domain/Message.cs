@@ -1,19 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics;
 
-namespace Domain
+namespace Domain;
+
+public class Message
 {
-    public class Message
-    {
-        [DatabaseGenerated(DatabaseGeneratedOption.None)]
-        [Key]
-        public short Id { get; set; }
-        //public byte Id { get; set; }
-        public string Text { get; set; } = string.Empty;
-    }
+    [DatabaseGenerated(DatabaseGeneratedOption.None)]
+    [Key]
+    public short Id { get; set; }
+    public string Text { get; set; } = string.Empty;
+
+    //public string TextTest => Id switch
+    //{
+    //    1 => "Нет доступа. Неразрешенный ключ",
+    //    2 => "Проход по ключу разрешен",
+    //    8 => "Проход совершен",
+    //    _ => throw new ArgumentOutOfRangeException()
+    //};
+
 }

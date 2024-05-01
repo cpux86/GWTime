@@ -21,10 +21,6 @@ namespace Application.DTOs
         [JsonIgnore]
         public List<Worker> Workers { get; set; } = new List<Worker>();
 
-        public async Task ToExel()
-        {
-
-        }
     }
 
     public class Group : IComparable
@@ -60,13 +56,6 @@ namespace Application.DTOs
 
     public class WorkTime
     {
-
-        public WorkTime(DateTime dt1, DateTime dt2)
-        {
-            this.EntryTime = dt1;
-            this.ExitTime = dt2;
-        }
-
         // Время входа
         //[JsonPropertyName("t1")]
         [JsonPropertyName("dt_in")]
@@ -93,6 +82,11 @@ namespace Application.DTOs
         [JsonPropertyName("time")]
         public string Tot => $"{(int)Total.TotalHours:00}:{Total.Minutes:00}";
 
+        public WorkTime(DateTime dt1, DateTime dt2)
+        {
+            this.EntryTime = dt1;
+            this.ExitTime = dt2;
+        }
 
     }
 }

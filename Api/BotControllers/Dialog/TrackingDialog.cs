@@ -128,7 +128,7 @@ namespace Api.BotControllers.Dialog
             handler!.GetCache<TrackingCache>().Options = option;
             //option.MenuInlineKeyboardMarkup = calendarMarkup;
             var msg = $"👤 <b>{user.FullName.Trim()}</b>\n" +
-                      $"👥 {user.UserGroup!.Name}.\n" +
+                      $"👥 {user.Group!.Name}.\n" +
                       $"последний доступ: {lastUseKey.Reader.Name}\n" +
                       $"{lastUseKey.DateTime:f}";
 

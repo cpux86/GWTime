@@ -14,7 +14,7 @@ namespace Application.Interfaces
 
         public Task<List<User>> GetUserListAsync();
 
-        public Task<List<UserGroup>> GetGroupsListAsync();
+        public Task<List<Group>> GetGroupsListAsync();
         public Task<List<User>> GetUserListByGroupIdAsync(int groupId);
     }
 }

@@ -11,10 +11,15 @@ namespace GateLogger.Services
         private const int _port = 1917;
         private bool _stop;
         private readonly object _lock = new object();
-        public static event Func<EventResponse, Task>? NewEvent;
+        //public static event Func<EventResponse, Task>? NewEvent;
+        public static event Action<EventResponse>? NewEvent;
 
+        private Action<EventResponse> _action;
 
-        public GateTcpClient(string address) : base(address, _port) { }
+        public GateTcpClient(string address, Action<EventResponse> onResponse) : base(address, _port)
+        {
+            _action = onResponse;
+        }
         public GateTcpClient(string address, int port) : base(address, port) { }
 
         public void DisconnectAndStop()
@@ -72,11 +77,12 @@ namespace GateLogger.Services
                         new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                     var gateEvent = result?.Event;
                     if (gateEvent == null) continue;
-
-                    lock (_lock)
-                    {
-                        NewEvent!(gateEvent);
-                    }
+                    _action.Invoke(gateEvent);
+                    //NewEvent?.Invoke(gateEvent);
+                    //lock (_lock)
+                    //{
+                    //    NewEvent!(gateEvent);
+                    //}
                 }
                 catch (Exception e)
                 {

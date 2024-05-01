@@ -28,9 +28,9 @@ namespace Application.Services
         /// Список групп
         /// </summary>
         /// <returns></returns>
-        public async Task<List<UserGroup>> GetGroupsListAsync()
+        public async Task<List<Group>> GetGroupsListAsync()
         {
-            var groups = await _context.UserGroups
+            var groups = await _context.Groups
                 .AsNoTracking()
                 .ToListAsync(CancellationToken.None);
             return groups;
@@ -44,14 +44,13 @@ namespace Application.Services
         public async Task<List<User>> GetUserByNameAsync(string username)
         {
 
-
             var test = await _context.Users.WithSpecification(new UserByIdSpec(3390))
                 .FirstOrDefaultAsync(CancellationToken.None);
 
             var users = await _context.Users
                 .AsNoTracking()
                 .Include(e => e.Events)
-                .Include(u => u.UserGroup)
+                .Include(u => u.Group)
                 .Where(u => u.Name.StartsWith(username) || u.FullName.StartsWith(username))
                 .OrderBy(u => u.Name).ToListAsync(CancellationToken.None);
             return users;
@@ -63,7 +62,7 @@ namespace Application.Services
             return await _context.Users
                 .AsNoTracking()
                 .Include(e => e.Events)
-                .Include(u => u.UserGroup)
+                .Include(u => u.Group)
                 .Where(u => u.Id == userId)
                 .FirstOrDefaultAsync(CancellationToken.None) ?? throw new Exception("пользователь не найден");
             //return user;
@@ -90,8 +89,8 @@ namespace Application.Services
         {
             var users = await _context.Users
                 .AsNoTracking()
-                .Where(u=>u.UserGroup.Id == groupId)
-                .OrderBy(u=>u.UserGroup.Id)
+                .Where(u=>u.Group.Id == groupId)
+                .OrderBy(u=>u.Group.Id)
                 .ToListAsync(CancellationToken.None);
             return users;
         }

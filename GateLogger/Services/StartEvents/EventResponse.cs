@@ -10,12 +10,6 @@ namespace GateLogger.Services.StartEvents
         [JsonPropertyName("userId")] public int UserId { get; set; }
         [JsonPropertyName("dateTime")] public string DateTime { get; set; } = string.Empty;
 
-        //public EventType EventType => new()
-        //{
-        //    Id = (byte)EventCode,
-        //    Name = Message
-        //};
-
         public bool alarm { get; set; }
 
         [JsonPropertyName("unit")] public string ReaderName { get; set; } = string.Empty;

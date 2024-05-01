@@ -12,6 +12,19 @@ namespace GateLogger.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "Groups",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Groups", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Messages",
                 columns: table => new
                 {
@@ -36,34 +49,22 @@ namespace GateLogger.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "UserGroups",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_UserGroups", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     FullName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    UserGroupId = table.Column<int>(type: "int", nullable: true)
+                    GroupId = table.Column<int>(type: "int", nullable: true),
+                    Key = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Users_UserGroups_UserGroupId",
-                        column: x => x.UserGroupId,
-                        principalTable: "UserGroups",
+                        name: "FK_Users_Groups_GroupId",
+                        column: x => x.GroupId,
+                        principalTable: "Groups",
                         principalColumn: "Id");
                 });
 
@@ -74,6 +75,7 @@ namespace GateLogger.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     MessageId = table.Column<short>(type: "smallint", nullable: false),
+                    MessageId1 = table.Column<short>(type: "smallint", nullable: false),
                     ReaderId = table.Column<short>(type: "smallint", nullable: false),
                     UserId = table.Column<int>(type: "int", nullable: false),
                     dateTime = table.Column<DateTime>(type: "datetime2(2)", precision: 2, nullable: false)
@@ -82,8 +84,8 @@ namespace GateLogger.Migrations
                 {
                     table.PrimaryKey("PK_Events", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Events_Messages_MessageId",
-                        column: x => x.MessageId,
+                        name: "FK_Events_Messages_MessageId1",
+                        column: x => x.MessageId1,
                         principalTable: "Messages",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -108,6 +110,11 @@ namespace GateLogger.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Events_MessageId1",
+                table: "Events",
+                column: "MessageId1");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Events_ReaderId",
                 table: "Events",
                 column: "ReaderId");
@@ -118,9 +125,9 @@ namespace GateLogger.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Users_UserGroupId",
+                name: "IX_Users_GroupId",
                 table: "Users",
-                column: "UserGroupId");
+                column: "GroupId");
         }
 
         /// <inheritdoc />
@@ -139,7 +146,7 @@ namespace GateLogger.Migrations
                 name: "Users");
 
             migrationBuilder.DropTable(
-                name: "UserGroups");
+                name: "Groups");
         }
     }
 }

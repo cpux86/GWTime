@@ -7,7 +7,9 @@ using Microsoft.Extensions.Caching.Memory;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Channels;
 using System.Threading.Tasks;
+using Group = Domain.Group;
 
 namespace GateLogger
 {
@@ -27,9 +29,12 @@ namespace GateLogger
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         }
 
+        public Action<EventResponse> OnResponse { get; set; }
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             GateTcpClient.NewEvent += NewEventHandler;
+
+            
 
             var serverValue = _configuration.GetSection("GateServer").Value;
 
@@ -42,20 +47,19 @@ namespace GateLogger
                     var ip = endpoint.Address.ToString();
                     var port = endpoint.Port;
                     //new GateTcpClient(ip, 1234).ConnectAsync();
-                    var client = new GateTcpClient(ip)
+                    OnResponse = NewEventHandler;
+                    var client = new GateTcpClient(ip, OnResponse)
                     {
                         OptionKeepAlive = true,
                         OptionTcpKeepAliveTime = 30
                     };
-                    //client.OptionTcpKeepAliveInterval = 10;
                     client.ConnectAsync();
                 }
-           
-            //await Task.CompletedTask;
+            await Task.CompletedTask;
         }
 
 
-        private async Task NewEventHandler(EventResponse e)
+        private static void NewEventHandler(EventResponse e)
         {
             if (e.UserId == 0)
             {
@@ -63,10 +67,10 @@ namespace GateLogger
                 return;
             }
 
-            await using var db = new EventsDbContext();
+            using var db = new EventsDbContext();
 
             // тип события
-            var message = await db.Messages.FirstOrDefaultAsync(m => m.Id == e.EventCode) ??
+            var message = db.Messages.FirstOrDefault(m => m.Id == e.EventCode) ??
                           new Message { Id = (byte)e.EventCode, Text = e.Message };
             message.Text = e.Message;
 
@@ -75,7 +79,8 @@ namespace GateLogger
             // извлекаем номер ключа
             var key = Wiegand26Regex().Match(e.UserName).Value;
 
-            var reader = await db.Readers.FirstOrDefaultAsync(r => r.Id == (short)e.ReaderId) ?? new Reader { Id = (short)e.ReaderId, Name = e.ReaderName };
+            var reader = db.Readers
+                .FirstOrDefault(r => r.Id == (short)e.ReaderId) ?? new Reader { Id = (short)e.ReaderId, Name = e.ReaderName };
             reader.Name = e.ReaderName;
             // если пользователю не присвоена группа, то помещаем его в группу "Без группы"
             if (e.Group == string.Empty)
@@ -83,18 +88,19 @@ namespace GateLogger
                 e.Group = "Без группы";
             }
 
-            var group = await db.UserGroups.FirstOrDefaultAsync(g => g.Name == e.Group) ?? new UserGroup { Name = e.Group };
+            var group = db.Groups.FirstOrDefault(g => g.Name == e.Group) ?? new Group { Name = e.Group };
             if (group.Id == 0)
             {
-                db.UserGroups.Add(group);
+                db.Groups.Add(group);
             }
 
-            var user = await db.Users.FirstOrDefaultAsync(u => u.Id == e.UserId) ?? new User { Id = e.UserId, FullName = e.FullName, Name = userName };
+            var user = db.Users.FirstOrDefault(u => u.Id == e.UserId) ?? new User { Id = e.UserId, FullName = e.FullName, Name = userName };
+            //var user = await db.Users.FirstOrDefaultAsync(u => u.Key == key) ?? new User { Id = e.UserId, FullName = e.FullName, Name = userName };
 
             user.Name = userName;
             user.FullName = e.FullName;
-            user.UserGroup = group;
-            //user.Key = key;
+            user.Group = group;
+            user.Key = key;
 
 
             var gateEvent = new Event
@@ -111,8 +117,8 @@ namespace GateLogger
 
             try
             {
-                await db.SaveChangesAsync(CancellationToken.None);
-
+                //await db.SaveChangesAsync(CancellationToken.None);
+                db.SaveChanges();
                 Console.WriteLine($"{gateEvent.DateTime:G} {user.Name} {e.Message} {e.ReaderName}");
 
                 //_logger.LogInformation(message: e.message);

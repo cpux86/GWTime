@@ -12,7 +12,7 @@ namespace GateLogger.Infrastructure
 
         }
         public DbSet<Event> Events { get; set; }
-        public DbSet<UserGroup> UserGroups { get; set; }
+        public DbSet<Group> Groups { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Reader> Readers { get; set; }
         public DbSet<Message> Messages { get; set; }
@@ -23,7 +23,7 @@ namespace GateLogger.Infrastructure
             //base.OnConfiguring(optionsBuilder);
             optionsBuilder
                 .UseSqlServer("Server=10.65.68.252; Database=GWTime_test2.1; User ID=sa; Password=LaMp368&;Integrated Security=false;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False");
-            //optionsBuilder.LogTo(System.Console.WriteLine, LogLevel.Information);
+                //optionsBuilder.LogTo(System.Console.WriteLine, LogLevel.Information);
             //optionsBuilder.LogTo(message => System.Diagnostics.Debug.WriteLine(message));
 
         }

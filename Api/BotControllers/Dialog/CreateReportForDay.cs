@@ -28,6 +28,7 @@ using PRTelegramBot.Models.CallbackCommands;
 using PRTelegramBot.Models.Enums;
 using Google.Protobuf.WellKnownTypes;
 using System.IO;
+using Group = Application.DTOs.Group;
 
 
 namespace Api.BotControllers.Dialog
@@ -575,7 +576,7 @@ namespace Api.BotControllers.Dialog
             }
 
             var msg = new StringBuilder();
-            var m = msg.AppendJoin("\n", workersToday.Select(e=>$"👷‍♂️[{e.UserGroup.Id}] {e.Name}"));
+            var m = msg.AppendJoin("\n", workersToday.Select(e=>$"👷‍♂️[{e.Group.Id}] {e.Name}"));
             await PRTelegramBot.Helpers.Message.Send(client, update, m.ToString());
         }
 
@@ -627,7 +628,7 @@ namespace Api.BotControllers.Dialog
 
 
 
-            var groups = userList.GroupBy(e=>e.UserGroup.Name);
+            var groups = userList.GroupBy(e=>e.Group.Name);
 
 
             foreach (var group in groups)

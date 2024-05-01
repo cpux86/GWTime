@@ -16,6 +16,7 @@ using Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.DependencyInjection;
+using Group = Application.DTOs.Group;
 
 
 namespace Application.Services
@@ -65,12 +66,13 @@ namespace Application.Services
 
         public async Task<List<User>> GetWorkersTodayAsync()
         {
+            var readerIds = new[] {87,141,124 };
             var users = await _dbContext.Events
                 .AsNoTracking()
                 .Where(e => e.DateTime > DateTime.Today && e.MessageId == 2)
-                .Where(e => e.Reader.Id == 87 || e.Reader.Id == 141)
-                .Include(e => e.User).ThenInclude(u => u.UserGroup)
-                .Select(e => e.User).OrderBy(e => e.UserGroup.Id).ThenBy(e => e.Name)
+                .Where(e=>readerIds.Contains(e.ReaderId))
+                .Include(e => e.User).ThenInclude(u => u.Group)
+                .Select(e => e.User).OrderBy(e => e.Group.Id).ThenBy(e => e.Name)
 
                 .ToListAsync(CancellationToken.None);
 
@@ -82,14 +84,23 @@ namespace Application.Services
         // последнее 
         public async Task<Event> GetLastUseKey(int userId)
         {
+
+            var t = await _dbContext.Events
+                .AsNoTracking()
+                .Where(e => e.User.Id == userId)
+                .Include(e=>e.User)
+                .Include(e=>e.Reader)
+                .OrderByDescending(e => e.DateTime)
+                .FirstOrDefaultAsync(CancellationToken.None);
             
             var events = await _dbContext.Events
                 .AsNoTracking()
                 .Include(e=>e.Reader)
                 .OrderBy(e => e.DateTime)
                 //.Where(e => e.UserId == userId)
-                .Select(e => new Event() {User = e.User, Reader = e.Reader, DateTime = e.DateTime, Message = e.Message  })
-                
+                //.Select(e => new Event() {User = e.User, Reader = e.Reader, DateTime = e.DateTime, Message = e.Message  })
+                .Select(e => new Event() { User = e.User, Reader = e.Reader, DateTime = e.DateTime})
+
                 .LastOrDefaultAsync(e => e.User.Id == userId, CancellationToken.None);
             //return events.DateTime;
             return events;
@@ -127,7 +138,7 @@ namespace Application.Services
             stopwatch.Start();
             var usersList = await _dbContext.Users
                 .AsNoTracking()
-                .Include(e => e.UserGroup)
+                .Include(e => e.Group)
                 .Include(u => u.Events!
                     .Where(e => e.DateTime >= startDate && e.DateTime <= endDate)
                     .Where(e => e.MessageId == messageId)
@@ -139,8 +150,6 @@ namespace Application.Services
             //смотрим сколько миллисекунд было затрачено на выполнение
             //Console.WriteLine(stopwatch.ElapsedMilliseconds);
 
-            //var g = usersList.GroupBy(e => e.UserGroup.Name)
-            //    .Select(e => new UserGroup() { Name = e.Key, Users = e.ToList() }).ToList();
 
 
             var report = new Report
@@ -152,17 +161,11 @@ namespace Application.Services
 
             foreach (var user in usersList)
             {
-                //Console.WriteLine(user.FullName);
-                //foreach (var dt in user.GetWorkingDaysList())
-                //{
-                   
-                //    Console.WriteLine(dt.ToString("G"));
-                //}
 
                 var worker = new Worker();
                 worker.Group = new Group
                 {
-                    Name = user.UserGroup.Name
+                    Name = user.Group.Name
                 };
 
                 worker.FullName = user.FullName;
@@ -180,16 +183,6 @@ namespace Application.Services
                         };
                         worker.WorkTimes.Add(v);
                     }
-                    //else if (inputReader.Exists(x => x == pre.ReaderId))
-                    //{
-                    //    var v = new WorkTime(pre.DateTime, evt.DateTime)
-                    //    {
-                    //        FirstReader = pre.Reader.Name,
-                    //        LastReader = evt.Reader.Name
-                    //    };
-                    //    worker.WorkTimes.Add(v);
-                    //}
-
                     pre = evt;
                 }
 
@@ -233,14 +226,14 @@ namespace Application.Services
             //        .AsNoTracking()
             //        .Include(t => t.Events)!.ThenInclude(e => e.Message)
             //        .Include(t => t.Events)!.ThenInclude(e => e.Reader)
-            //        .Include(e => e.UserGroup)
+            //        .Include(e => e.Group)
 
             //    .Select(e => new User()
             //    {
             //        Id = e.Id,
             //        Name = e.Name,
             //        FullName = e.FullName,
-            //        UserGroup = e.UserGroup,
+            //        Group = e.Group,
             //        Events = e.Events
             //            .Where(e => e.DateTime >= startDate && e.DateTime <= endDate)
             //            .ToList()
@@ -261,7 +254,7 @@ namespace Application.Services
             //var inputReader = new List<int> { 141, 87};
             //var usersList = await _dbContext.Users
             //    .AsNoTracking()
-            //    //.Include(e => e.UserGroup)
+            //    //.Include(e => e.Group)
             //    .Include(u => u.Events!
             //        //.Where(e=> inputReader.Contains(e.ReaderId))
             //        .Where(e => e.DateTime >= DateTime.Parse("2024-02-01 06:00:00.00"))
