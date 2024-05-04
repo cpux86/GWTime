@@ -50,7 +50,7 @@ namespace Application.Services
             var end = DateTime.Now;
             var events = await _dbContext.Events
                 .AsNoTracking()
-                .Where(e => e.MessageId == 2)
+                .Where(e => e.Code == 2)
                 .Where(e => e.DateTime >= start && e.DateTime <= end)
 
                 .Where(e => e.UserId == 2954)
@@ -69,7 +69,7 @@ namespace Application.Services
             var readerIds = new[] {87,141,124 };
             var users = await _dbContext.Events
                 .AsNoTracking()
-                .Where(e => e.DateTime > DateTime.Today && e.MessageId == 2)
+                .Where(e => e.DateTime > DateTime.Today && e.Code == 2)
                 .Where(e=>readerIds.Contains(e.ReaderId))
                 .Include(e => e.User).ThenInclude(u => u.Group)
                 .Select(e => e.User).OrderBy(e => e.Group.Id).ThenBy(e => e.Name)
@@ -88,22 +88,21 @@ namespace Application.Services
             var t = await _dbContext.Events
                 .AsNoTracking()
                 .Where(e => e.User.Id == userId)
-                .Include(e=>e.User)
-                .Include(e=>e.Reader)
+                .Include(e => e.User)
+                .Include(e => e.Reader)
                 .OrderByDescending(e => e.DateTime)
                 .FirstOrDefaultAsync(CancellationToken.None);
-            
-            var events = await _dbContext.Events
-                .AsNoTracking()
-                .Include(e=>e.Reader)
-                .OrderBy(e => e.DateTime)
-                //.Where(e => e.UserId == userId)
-                //.Select(e => new Event() {User = e.User, Reader = e.Reader, DateTime = e.DateTime, Message = e.Message  })
-                .Select(e => new Event() { User = e.User, Reader = e.Reader, DateTime = e.DateTime})
 
-                .LastOrDefaultAsync(e => e.User.Id == userId, CancellationToken.None);
-            //return events.DateTime;
-            return events;
+            //var events = await _dbContext.Events
+            //    .AsNoTracking()
+            //    .Include(e=>e.Reader)
+            //    .OrderBy(e => e.DateTime)
+            //    //.Where(e => e.UserId == userId)
+            //    //.Select(e => new Event() {User = e.User, Reader = e.Reader, DateTime = e.DateTime, Message = e.Message  })
+            //    .Select(e => new Event() { User = e.User, Reader = e.Reader, DateTime = e.DateTime})
+            //    .LastOrDefaultAsync(e => e.User.Id == userId, CancellationToken.None);
+            //return events;
+            return t;
         }
 
         public async Task<Report> GetReportByReaders(DateTime startDate, DateTime endDate, List<int> inputReader, List<int> outputReader, int messageId = 2)
@@ -141,7 +140,7 @@ namespace Application.Services
                 .Include(e => e.Group)
                 .Include(u => u.Events!
                     .Where(e => e.DateTime >= startDate && e.DateTime <= endDate)
-                    .Where(e => e.MessageId == messageId)
+                    .Where(e => e.Code == messageId)
                     .Where(e => inputReader.Contains(e.ReaderId) || outputReader.Contains(e.ReaderId))
                     .OrderBy(e => e.DateTime)).ThenInclude(e => e.Reader)
                 .ToListAsync(CancellationToken.None);
@@ -286,7 +285,7 @@ namespace Application.Services
                 .Include(e=>e.User)
                 .Include(e=>e.Reader)
                 .Where(e=>e.UserId == userId)
-                .Where(e=>e.MessageId == 2)
+                .Where(e=>e.Code == 2)
                 .Where(e=>e.DateTime >= dateTime && e.DateTime <= dateTime.AddDays(1))
                 .ToListAsync(CancellationToken.None);
             return tackPoints;

@@ -24,7 +24,7 @@ public class User : BaseEntity
     /// </summary>
     public Group? Group { get; set; }
 
-    public string Key { get; set; } = string.Empty;
+    public string? Key { get; set; } = string.Empty;
 
     /// <summary>
     /// Возвращает список рабочих дней  
@@ -35,13 +35,5 @@ public class User : BaseEntity
         var dateTimes = this.Events!.GroupBy(e=>e.DateTime.Date).Select(e=>e.Key).ToList();
         return dateTimes;
     }
-
-    //public void GetLastUseKey()
-    //{
-    //    var orderedEnumerable = Events.OrderBy(e => e.DateTime).Select(e=> new Event()
-    //    {
-
-    //    })
-    //}
 
 }

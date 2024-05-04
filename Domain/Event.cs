@@ -3,16 +3,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Domain;
 
-[Index(nameof(MessageId), nameof(ReaderId), nameof(UserId), nameof(DateTime), IsUnique = true)]
-public class Event {
+[Index(nameof(Code), nameof(ReaderId), nameof(UserId), nameof(DateTime), IsUnique = true)]
+public class Event
+{
     public int Id { get; set; }
 
-    //[Column("eventCode")] 
-    public short MessageId { get; set; }
+    [Column("Code")]
+    public short Code { get; set; }
+    //public Message Message { get; set; }
 
-    public Message Message { get; set; } = new();
-
-    public string GetMessage => MessageId switch
+    public string Message => Code switch
     {
         1 => "Нет доступа. Неразрешенный ключ",
         2 => "Проход по ключу разрешен",
@@ -20,10 +20,9 @@ public class Event {
         _ => throw new ArgumentOutOfRangeException()
     };
 
-//[Column("readerId")]
-public short ReaderId { get; set; }
+    //[Column("readerId")]
+    public short ReaderId { get; set; }
     public Reader Reader { get; set; } = new();
-
 
     //[Column("userId")]
     public int UserId { get; set; }

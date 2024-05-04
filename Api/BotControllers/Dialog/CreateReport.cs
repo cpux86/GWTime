@@ -102,7 +102,7 @@ namespace Api.BotControllers.Dialog
            
 
             await PRTelegramBot.Helpers.Message.Send(client, update, cache.Text, option);
-            //await PRTelegramBot.Helpers.Message.DeleteChat(client, update.Message.Chat.Id, update.Message.MessageId);
+            //await PRTelegramBot.Helpers.Message.DeleteChat(client, update.Message.Chat.Id, update.Message.Code);
             //var handler = update.GetStepHandler<StepTelegram>();
 
         }

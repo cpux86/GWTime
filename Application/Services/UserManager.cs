@@ -44,8 +44,8 @@ namespace Application.Services
         public async Task<List<User>> GetUserByNameAsync(string username)
         {
 
-            var test = await _context.Users.WithSpecification(new UserByIdSpec(3390))
-                .FirstOrDefaultAsync(CancellationToken.None);
+            //var test = await _context.Users.WithSpecification(new UserByIdSpec(3390))
+            //    .FirstOrDefaultAsync(CancellationToken.None);
 
             var users = await _context.Users
                 .AsNoTracking()

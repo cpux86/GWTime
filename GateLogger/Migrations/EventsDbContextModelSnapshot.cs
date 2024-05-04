@@ -30,16 +30,14 @@ namespace GateLogger.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<short>("Code")
+                        .HasColumnType("smallint")
+                        .HasColumnName("Code");
+
                     b.Property<DateTime>("DateTime")
                         .HasPrecision(2)
                         .HasColumnType("datetime2(2)")
                         .HasColumnName("dateTime");
-
-                    b.Property<short>("MessageId")
-                        .HasColumnType("smallint");
-
-                    b.Property<short>("MessageId1")
-                        .HasColumnType("smallint");
 
                     b.Property<short>("ReaderId")
                         .HasColumnType("smallint");
@@ -49,13 +47,11 @@ namespace GateLogger.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("MessageId1");
-
                     b.HasIndex("ReaderId");
 
                     b.HasIndex("UserId");
 
-                    b.HasIndex("MessageId", "ReaderId", "UserId", "DateTime")
+                    b.HasIndex("Code", "ReaderId", "UserId", "DateTime")
                         .IsUnique();
 
                     b.ToTable("Events");
@@ -76,20 +72,6 @@ namespace GateLogger.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Groups");
-                });
-
-            modelBuilder.Entity("Domain.Message", b =>
-                {
-                    b.Property<short>("Id")
-                        .HasColumnType("smallint");
-
-                    b.Property<string>("Text")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Messages");
                 });
 
             modelBuilder.Entity("Domain.Reader", b =>
@@ -119,7 +101,6 @@ namespace GateLogger.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Key")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
@@ -135,12 +116,6 @@ namespace GateLogger.Migrations
 
             modelBuilder.Entity("Domain.Event", b =>
                 {
-                    b.HasOne("Domain.Message", "Message")
-                        .WithMany()
-                        .HasForeignKey("MessageId1")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Domain.Reader", "Reader")
                         .WithMany("Events")
                         .HasForeignKey("ReaderId")
@@ -152,8 +127,6 @@ namespace GateLogger.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Message");
 
                     b.Navigation("Reader");
 

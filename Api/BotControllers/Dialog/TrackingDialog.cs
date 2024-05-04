@@ -89,6 +89,8 @@ namespace Api.BotControllers.Dialog
             //stopwatch.Start();
 
             var users = await _userManager.GetUserByNameAsync(userName);
+            
+            
             var user = users.LastOrDefault();
 
             //stopwatch.Stop();

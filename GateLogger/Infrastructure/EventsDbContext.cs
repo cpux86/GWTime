@@ -15,9 +15,9 @@ namespace GateLogger.Infrastructure
         public DbSet<Group> Groups { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Reader> Readers { get; set; }
-        public DbSet<Message> Messages { get; set; }
+        //public DbSet<Message> Messages { get; set; }
 
-        //public DbSet<EventCode> EventsCode { get; set; }
+        //public DbSet<Code> EventsCode { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             //base.OnConfiguring(optionsBuilder);
