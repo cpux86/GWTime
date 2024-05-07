@@ -14,11 +14,11 @@ namespace GateLogger.Services
         //public static event Func<EventResponse, Task>? NewEvent;
         public static event Action<EventResponse>? NewEvent;
 
-        private Action<EventResponse> _action;
+        //private Action<EventResponse> _action;
 
-        public GateTcpClient(string address, Action<EventResponse> onResponse) : base(address, _port)
+        public GateTcpClient(string address) : base(address, _port)
         {
-            _action = onResponse;
+            //_action = onResponse;
         }
         public GateTcpClient(string address, int port) : base(address, port) { }
 
@@ -77,8 +77,7 @@ namespace GateLogger.Services
                         new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                     var gateEvent = result?.Event;
                     if (gateEvent == null) continue;
-                    _action.Invoke(gateEvent);
-                    //NewEvent?.Invoke(gateEvent);
+                    NewEvent?.Invoke(gateEvent);
                     //lock (_lock)
                     //{
                     //    NewEvent!(gateEvent);
@@ -98,6 +97,22 @@ namespace GateLogger.Services
             Console.WriteLine($"Chat TCP client caught an error with code {error}");
         }
 
-       
+
+        public static async Task<EventResponse> ReadMessage()
+        {
+            var tcs = new TaskCompletionSource<EventResponse>();
+            void Handler(EventResponse e) => tcs.TrySetResult(e);
+
+            try
+            {
+                NewEvent += Handler;
+                return await tcs.Task;
+                //tcs.Task<>
+            }
+            finally
+            {
+                NewEvent -= Handler;
+            }
+        }
     }
 }

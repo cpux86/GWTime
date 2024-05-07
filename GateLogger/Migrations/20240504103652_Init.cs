@@ -44,7 +44,10 @@ namespace GateLogger.Migrations
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     FullName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     GroupId = table.Column<int>(type: "int", nullable: true),
-                    Key = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Key = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    LastUsedKeyDate = table.Column<DateTime>(type: "datetime2(2)", precision: 2, nullable: true),
+                    LastUsedReaderName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    LastEventMessage = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {

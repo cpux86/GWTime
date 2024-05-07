@@ -4,19 +4,29 @@ using GateLogger.Services;
 using GateLogger.Services.StartEvents;
 using Microsoft.Extensions.Caching.Memory;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Group = Domain.Group;
 
+
 namespace GateLogger;
+
+
+
 
 public partial class Worker : BackgroundService
 {
+
+
+
+
     private static ILogger<Worker> _logger;
 
     //private readonly EventsDbContext _dbContext;
-    private IMemoryCache _cache;
+    private static IMemoryCache _cache;
     private readonly IConfiguration _configuration;
 
     public Worker(ILogger<Worker> logger, IMemoryCache cache, IConfiguration configuration)
@@ -26,13 +36,11 @@ public partial class Worker : BackgroundService
         _configuration = configuration;
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
     }
-
-    public Action<EventResponse> OnResponse { get; set; }
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         GateTcpClient.NewEvent += NewEventHandler;
+        
 
-            
 
         var serverValue = _configuration.GetSection("GateServer").Value;
 
@@ -45,14 +53,52 @@ public partial class Worker : BackgroundService
                 var ip = endpoint.Address.ToString();
                 var port = endpoint.Port;
                 //new GateTcpClient(ip, 1234).ConnectAsync();
-                OnResponse = NewEventHandler;
-                var client = new GateTcpClient(ip, OnResponse)
+                new GateTcpClient(ip, 1917)
                 {
                     OptionKeepAlive = true,
                     OptionTcpKeepAliveTime = 30
-                };
-                client.ConnectAsync();
+                }.ConnectAsync();
+
+
+                //var client = new GateTcpClient(ip)
+                //{
+                //    OptionKeepAlive = true,
+                //    OptionTcpKeepAliveTime = 30
+                //};
+                //client.ConnectAsync();
+                
+
+                //using var sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+
+
+                //var  args = new SocketAsyncEventArgs();
+
+
+                //sock.ConnectAsync(args);
+
+
+
+                //var socket = args.ConnectSocket;
+                //if (socket != null)
+                //    await socket.ConnectAsync(IPAddress.Parse("10.65.69.99"), 1917, CancellationToken.None);
+                //if (socket.Connected)
+                //{
+                //    Console.WriteLine("Connected ");
+                //}
+
+
+
+
+
+
             }
+        while (true)
+        {
+            var r = await GateTcpClient.ReadMessage();
+            Console.WriteLine($"пользователь : {r.FullName}");
+        }
+
+
         await Task.CompletedTask;
     }
 
@@ -67,11 +113,17 @@ public partial class Worker : BackgroundService
 
         using var db = new EventsDbContext();
 
-        //// тип события
-        //var message = db.Messages.FirstOrDefault(m => m.Id == e.Code) ??
-        //              new Message { Id = (byte)e.Code, Text = e.Message };
-        //message.Text = e.Message;
 
+        //var eUsers = db.Users.ToList();
+        //foreach (var user1 in eUsers)
+        //{
+        //    user1.Key = "999/99999";
+        //    user1.LastEventMessage = string.Empty;
+        //    user1.LastUsedKeyDate = DateTime.MinValue;
+        //    user1.LastUsedReaderName = string.Empty;
+        //}
+
+        //db.SaveChanges();
 
         var userName = Wiegand26Regex().Replace(e.UserName, "").Trim();
         // извлекаем номер ключа
@@ -93,31 +145,66 @@ public partial class Worker : BackgroundService
             db.Groups.Add(group);
         }
 
+
         var user = db.Users.FirstOrDefault(u => u.Id == e.UserId) ?? new User { Id = e.UserId, FullName = e.FullName, Name = userName };
-        //var user = await db.Users.FirstOrDefaultAsync(u => u.Key == key) ?? new User { Id = e.UserId, FullName = e.FullName, Name = userName };
+        //User user;
+        //if (!_cache.TryGetValue(e.UserId, out user))
+        //{
+        //    user = db.Users.FirstOrDefault(u => u.Id == e.UserId) ?? new User { Id = e.UserId, FullName = e.FullName, Name = userName };
+        //    if (user != null)
+        //    {
+        //        _cache.Set(user.Id, user,
+        //            new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromMinutes(5)));
+        //    }
+        //}
+
+        
+
+        //var users = db.Users.Where(u => u.Id == e.UserId || u.Key == key).ToList() ?? new List<User>()
+        //{
+        //    new User { Id = e.UserId, FullName = e.FullName, Name = userName }
+        //};
+
+        var users = db.Users.Where(u => u.Id == e.UserId || u.Key == key).ToList();
+
+        foreach (var u in users.Where(u => u.Id != e.UserId))
+        {
+            u.Key = string.Empty;
+        }
+
+
 
         user.Name = userName;
         user.FullName = e.FullName;
         user.Group = group;
         user.Key = key;
 
-        var gateEvent = new Event
+        var dateTime = DateTime.Parse(e.DateTime);
+        // если пришло новое событие или проходов у user еще не было, то обновляем данные о последнем проходе проходе
+        if (dateTime > user.LastUsedKeyDate || user.LastUsedKeyDate is null)
+        {
+            user.LastUsedKeyDate = dateTime;
+            user.LastUsedReaderName = e.ReaderName;
+            user.LastEventMessage = e.Message;
+        }
+
+        var evt = new Event
         {
             User = user,
             Reader = reader,
-            DateTime = DateTime.Parse(e.DateTime),
+            DateTime = dateTime,
             Code = e.Code
 
         };
 
-        db.Events.Add(gateEvent);
+        db.Events.Add(evt);
 
 
         try
         {
             //await db.SaveChangesAsync(CancellationToken.None);
             db.SaveChanges();
-            Console.WriteLine($"{gateEvent.DateTime:G} {user.Name} {e.Message} {e.ReaderName}");
+            Console.WriteLine($"{evt.DateTime:G} {user.Name} {e.Message} {e.ReaderName}");
 
             //_logger.LogInformation(message: e.message);
         }

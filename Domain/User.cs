@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain;
 
@@ -25,6 +26,18 @@ public class User : BaseEntity
     public Group? Group { get; set; }
 
     public string? Key { get; set; } = string.Empty;
+
+    [Precision(2)]
+    /// <summary>
+    /// Дата последнего использования ключа
+    /// </summary>
+    public DateTime? LastUsedKeyDate { get; set; } = DateTime.MinValue;
+    /// <summary>
+    /// Место последнего прохода
+    /// </summary>
+    public string? LastUsedReaderName { get; set; }
+
+    public string? LastEventMessage { get; set; }
 
     /// <summary>
     /// Возвращает список рабочих дней  

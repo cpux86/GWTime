@@ -672,7 +672,7 @@ public class CreateReportForDay
 
 
 
-    [ReplyMenuHandler("Другое")]
+    //[ReplyMenuHandler("Другое")]
     public async Task OtherPeriod(ITelegramBotClient client, Update update)
     {
 
@@ -733,7 +733,7 @@ public class CreateReportForDay
 
 
 
-    //[ReplyMenuHandler("Другое")]
+    [ReplyMenuHandler("Другое")]
     public async Task Test(ITelegramBotClient client, Update update)
     {
         await PRTelegramBot.Helpers.Message.Send(client, update, "Обработка запроса...");

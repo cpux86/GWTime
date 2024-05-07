@@ -26,5 +26,9 @@ namespace Persistence
         public DbSet<Message> Messages { get; set; }
         public DbSet<Reader> Readers { get; set; }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+        }
     }
 }

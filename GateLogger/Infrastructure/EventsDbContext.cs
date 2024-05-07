@@ -24,7 +24,7 @@ namespace GateLogger.Infrastructure
             optionsBuilder
                 .UseSqlServer("Server=10.65.68.252; Database=GWTime_test2.1; User ID=sa; Password=LaMp368&;Integrated Security=false;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False");
                 //optionsBuilder.LogTo(System.Console.WriteLine, LogLevel.Information);
-            //optionsBuilder.LogTo(message => System.Diagnostics.Debug.WriteLine(message));
+            optionsBuilder.LogTo(message => System.Diagnostics.Debug.WriteLine(message));
 
         }
 

@@ -91,7 +91,7 @@ namespace Application.Services
                 .Include(e => e.User)
                 .Include(e => e.Reader)
                 .OrderByDescending(e => e.DateTime)
-                .FirstOrDefaultAsync(CancellationToken.None);
+                .FirstOrDefaultAsync(CancellationToken.None) ?? throw new Exception();
 
             //var events = await _dbContext.Events
             //    .AsNoTracking()

@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GateLogger.Migrations
 {
     [DbContext(typeof(EventsDbContext))]
-    [Migration("20240503133620_Init")]
+    [Migration("20240504103652_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -104,6 +104,16 @@ namespace GateLogger.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Key")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LastEventMessage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("LastUsedKeyDate")
+                        .HasPrecision(2)
+                        .HasColumnType("datetime2(2)");
+
+                    b.Property<string>("LastUsedReaderName")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
