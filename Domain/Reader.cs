@@ -8,7 +8,7 @@ public class Reader : BaseEntity, IEquatable<Reader>
     public short Id { get; set; }
 
     public string Name { get; set; } = string.Empty;
-    public List<Event>? Events { get; set; }
+    public List<Event>? Events { get; set; } = new List<Event>();
 
 
 

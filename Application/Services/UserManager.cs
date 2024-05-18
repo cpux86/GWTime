@@ -44,14 +44,17 @@ namespace Application.Services
         public async Task<List<User>> GetUserByNameAsync(string username)
         {
 
-            //var test = await _context.Users.WithSpecification(new UserByIdSpec(3390))
-            //    .FirstOrDefaultAsync(CancellationToken.None);
+
+
+            //var r = _context.GetWorkingDaysByUserId(5);
+
 
             var users = await _context.Users
                 .AsNoTracking()
-                .Include(e => e.Events)
+                //.Include(e => e.Events)
                 .Include(u => u.Group)
-                .Where(u => u.Name.StartsWith(username) || u.FullName.StartsWith(username))
+                .Where(u=>EF.Functions.Like(u.Name, $@"%{username}%") || EF.Functions.Like(u.FullName, $@"%{username}%"))
+                //.Where(u => u.Name.StartsWith(username) || u.FullName.StartsWith(username))
                 .OrderBy(u => u.Name).ToListAsync(CancellationToken.None);
             return users;
         }
@@ -61,7 +64,7 @@ namespace Application.Services
         {
             return await _context.Users
                 .AsNoTracking()
-                .Include(e => e.Events)
+                //.Include(e => e.Events)
                 .Include(u => u.Group)
                 .Where(u => u.Id == userId)
                 .FirstOrDefaultAsync(CancellationToken.None) ?? throw new Exception("пользователь не найден");

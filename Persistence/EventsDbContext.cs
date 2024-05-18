@@ -5,15 +5,14 @@ using System.Text;
 using System.Threading.Tasks;
 using Application.Interfaces;
 using Domain;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace Persistence
 {
     public class EventsDbContext : DbContext, IEventsDbContext
     {
-        public EventsDbContext(DbContextOptions options) : base(options)
-        {
-        }
+        public EventsDbContext(DbContextOptions options) : base(options) { }
 
         public EventsDbContext()
         {
@@ -29,6 +28,25 @@ namespace Persistence
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+        }
+
+        /// <summary>
+        /// Возвращает даты рабочих дней
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        public List<DateTime> GetWorkingDaysByUserId(int userId, DateTime startDate, DateTime endDate)
+        {
+
+            return Database.SqlQueryRaw<DateTime>($"SELECT DISTINCT CONVERT(date, dateTime) AS dt FROM Events" +
+                                                  $" WHERE UserId = @userId and dateTime > @startDt and dateTime < @endDt" +
+                                                  $" ORDER BY dt ASC", new SqlParameter("userId", userId), new SqlParameter("startDt", startDate), new SqlParameter("endDt", endDate))
+                .ToList();
+
+            //return Database.SqlQueryRaw<DateTime>($"SELECT DISTINCT CONVERT(date, dateTime) AS dt FROM Events WHERE UserId = @userId", new SqlParameter("userId", userId))
+            //    //.Where(dt=>dt.Date < DateTime.Now)
+            //    .ToList();
+
         }
     }
 }

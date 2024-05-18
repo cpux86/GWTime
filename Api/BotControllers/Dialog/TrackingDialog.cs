@@ -53,7 +53,7 @@ namespace Api.BotControllers.Dialog
         public async Task Tracking(ITelegramBotClient client, Update update)
         {
 
-            _logger.LogError("Это ошибка");
+            //_logger.LogError("Это ошибка");
             var msg = "Кто вас интересует?";
             update.RegisterStepHandler(new StepTelegram(FindUserByName, new TrackingCache()));
             var options = new OptionMessage();
@@ -64,7 +64,7 @@ namespace Api.BotControllers.Dialog
             // Отчетная дата - начало каждого месяца. Это первое число плюс время
             var startDateTime = new DateTime(now.Year, now.Month, 1).AddMonths(-1);
 
-            var users = await _reportService.GetUserListWithEventsByDateRange(startDateTime, now);
+            var users = await _reportService.GetUsersAsync(startDateTime, now);
 
             var userList = users.Take(250).Select(user => new KeyboardButton($"{user.Name}")).ToList(); ;
 
@@ -93,16 +93,19 @@ namespace Api.BotControllers.Dialog
             
             var user = users.LastOrDefault();
 
-            //stopwatch.Stop();
-            //Console.WriteLine($"GetUserByNameAsync {stopwatch.ElapsedMilliseconds}");
             if (user == null)
             {
                 _logger.LogWarning($"User {userName} не найден");
                 await PRTelegramBot.Helpers.Message.Send(client, update.GetChatId(), "не найдено");
                 return;
             }
-            var workingDaysList = user.GetWorkingDaysList();
-            var workDateTimes = workingDaysList.Where(e => e.Month == DateTime.Today.Month).ToList();
+            //var workingDaysList = user.GetWorkingDaysList();
+            // передаем id пользователя и нужный месяц
+            var workingDays = _reportService.GetWorkingDaysByUserId(user.Id, DateTime.Today);
+
+            //var workDateTimes = workingDaysList.Where(e => e.Month == DateTime.Today.Month).ToList();
+            //var workDateTimes = workingDays.Where(e => e.Month == DateTime.Today.Month).ToList();
+
             //stopwatch.Start();
             //Получаем текущий обработчик
             var handler = update.GetStepHandler<StepTelegram>();
@@ -117,27 +120,32 @@ namespace Api.BotControllers.Dialog
             keyboardRows.Add(Row.Date(DateTime.Today, dtfi, 0));
             keyboardRows.Add(Row.DayOfWeek(dtfi, 0));
             //var testRows = Row.Month(DateTime.Today, dtfi, 0);
-            var testRows = TestRow.Month(DateTime.Today, dtfi, workDateTimes, 0);
+            var testRows = TestRow.Month(DateTime.Today, dtfi, workingDays, 0);
             
             keyboardRows.AddRange(testRows);
             keyboardRows.Add(Row.Controls(DateTime.Today, 0));
 
-            //Console.WriteLine($"до - {stopwatch.ElapsedMilliseconds}");
-            var lastUseKey = await _reportService.GetLastUseKey(user.Id);
-            //Console.WriteLine($"после - {stopwatch.ElapsedMilliseconds}");
+
+            //var lastUseKey = await _reportService.GetLastUseKey(user.Id);
+
             var option = new OptionMessage();
             option.MenuInlineKeyboardMarkup = new InlineKeyboardMarkup(keyboardRows);
             handler!.GetCache<TrackingCache>().Options = option;
             //option.MenuInlineKeyboardMarkup = calendarMarkup;
+
+            //var msg = $"👤 <b>{user.FullName.Trim()}</b>\n" +
+            //          $"👥 {user.Group!.Name}.\n" +
+            //          $"последний доступ: {lastUseKey.Reader.Name}\n" +
+            //          $"{lastUseKey.DateTime:f}";
+
+
             var msg = $"👤 <b>{user.FullName.Trim()}</b>\n" +
                       $"👥 {user.Group!.Name}.\n" +
-                      $"последний доступ: {lastUseKey.Reader.Name}\n" +
-                      $"{lastUseKey.DateTime:f}";
+                      $"последний доступ: {user.LastUsedReaderName}\n" +
+                      $"{user.LastUsedKeyDate:f}";
 
             await Helpers.Message.Send(client, update.GetChatId(), msg, option);
         }
-
-        // lastUseKey.DateTime:f
 
         /// <summary>
         /// Выбор года или месяца
@@ -245,8 +253,14 @@ namespace Api.BotControllers.Dialog
                     //var user = await _userManager.GetUserByNameAsync(cache.FullName);
                     var user = await _userManager.GetUserByIdAsync(cache.UserId);
 
-                    var workingDaysList = user.GetWorkingDaysList();
-                    var workDateTimes = workingDaysList.Where(e => e.Date.ToString("Y") == command.Data.Date.ToString("Y")).ToList();
+                    //var workingDaysList = user.GetWorkingDaysList();
+                    //var workDateTimes = workingDaysList.Where(e => e.Date.ToString("Y") == command.Data.Date.ToString("Y")).ToList();
+
+
+                    var workingDays = _reportService.GetWorkingDaysByUserId(user.Id, command.Data.Date);
+
+                    //var workDateTimes = workingDaysList.Where(e => e.Month == DateTime.Today.Month).ToList();
+                    var workDateTimes = workingDays.Where(e => e.Date.ToString("Y") == command.Data.Date.ToString("Y")).ToList();
 
 
                     var keyboardRows = new List<IEnumerable<InlineKeyboardButton>>();
@@ -318,16 +332,15 @@ namespace Api.BotControllers.Dialog
                     var t1 = sb.AppendJoin("\n", events.OrderBy(e => e.DateTime)
                         .Select(e => $"<b>{e.DateTime:t}</b> {e.Reader.Name}"));
 
-                    var t = sb.ToString();
+                    //var t = sb.ToString();
+                    //Console.WriteLine(t.Length);
 #if DEBUG
                     //botClient.InvokeCommonLog(t);
 #endif
 
-                    await Helpers.Message.Edit(botClient, update.GetChatId(), update.GetMessageId(), t, cache.Options);
+                    await Helpers.Message.Edit(botClient, update.GetChatId(), update.GetMessageId(), sb.ToString(), cache.Options);
                     //botClient.InvokeCommonLog($"Tracking по фамилии: {cache.FullName}, {command.Data.Date:d}");
                     _logger.LogInformation($"{update.GetInfoUser()}| Tracking по фамилии: {cache.FullName}, {command.Data.Date:d}");
-                    //sb.Clear();
-                    //t1.Clear();
 
                 }
             }

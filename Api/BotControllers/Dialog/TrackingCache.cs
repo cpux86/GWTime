@@ -16,7 +16,6 @@ namespace Api.BotControllers.Dialog
         public DateTime DateTime { get; set; }
         public bool ClearData()
         {
-            
             this.FullName = string.Empty;
             return true;
         }

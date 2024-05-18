@@ -27,7 +27,7 @@ public partial class Worker : BackgroundService
 
     //private readonly EventsDbContext _dbContext;
     private static IMemoryCache _cache;
-    private readonly IConfiguration _configuration;
+    private static IConfiguration _configuration;
 
     public Worker(ILogger<Worker> logger, IMemoryCache cache, IConfiguration configuration)
     {
@@ -35,6 +35,7 @@ public partial class Worker : BackgroundService
         _cache = cache;
         _configuration = configuration;
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
     }
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -110,7 +111,6 @@ public partial class Worker : BackgroundService
             Console.WriteLine($"Log {e.Message} {e.ReaderName}");
             return;
         }
-
         using var db = new EventsDbContext();
 
 

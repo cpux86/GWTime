@@ -51,7 +51,8 @@ namespace Application.Services
     //    public async Task<List<User>> GetUserListAsync()
     //    {
 
-    //        var users = await _dbContext.Events
+    //        var
+    // = await _dbContext.Events
     //            .AsNoTracking()
     //            //.Where(p => EF.Functions.Like(p.fio, "%Каськов%")
     //            .Select(u => new User{ FullName = u.fio, Group = u.group})

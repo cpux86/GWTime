@@ -16,5 +16,11 @@ namespace Application.Interfaces
         public DbSet<User> Users { get; set; }
         public DbSet<Message> Messages { get; set; }
         public DbSet<Reader> Readers { get; set; }
+        /// <summary>
+        /// Возвращает даты рабочих дней
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        public List<DateTime> GetWorkingDaysByUserId(int userId, DateTime start, DateTime end);
     }
 }

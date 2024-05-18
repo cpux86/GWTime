@@ -11,15 +11,19 @@
   <ItemGroup>
     <Compile Remove="Admin\**" />
     <Compile Remove="BotControllers\Enums\**" />
+    <Compile Remove="BotControllers\MenuHandlers\**" />
     <Compile Remove="Protos\**" />
     <Content Remove="Admin\**" />
     <Content Remove="BotControllers\Enums\**" />
+    <Content Remove="BotControllers\MenuHandlers\**" />
     <Content Remove="Protos\**" />
     <EmbeddedResource Remove="Admin\**" />
     <EmbeddedResource Remove="BotControllers\Enums\**" />
+    <EmbeddedResource Remove="BotControllers\MenuHandlers\**" />
     <EmbeddedResource Remove="Protos\**" />
     <None Remove="Admin\**" />
     <None Remove="BotControllers\Enums\**" />
+    <None Remove="BotControllers\MenuHandlers\**" />
     <None Remove="Protos\**" />
   </ItemGroup>
 
@@ -55,10 +59,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Application\Application.csproj" />
     <ProjectReference Include="..\Persistence\Persistence.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="BotControllers\MenuHandlers\" />
   </ItemGroup>
 
 </Project>

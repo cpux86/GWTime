@@ -17,14 +17,19 @@ using Telegram.Bot.Types;
 using Helpers = PRTelegramBot.Helpers;
 using Update = Telegram.Bot.Types.Update;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 
-builder.Services.AddPersistence();
+//builder.Configuration.AddEnvironmentVariables();
+
+builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddApplication();
 builder.Services.AddBotHandlers();
+builder.Services.AddResponseCompression();
+
 //builder.Logging.ClearProviders();
 builder.Logging.AddNLog();
 //builder.Host.UseNLog();
@@ -48,6 +53,8 @@ builder.Services.AddGrpc();
 
 var app = builder.Build();
 
+app.UseResponseCompression();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -57,6 +64,7 @@ if (app.Environment.IsDevelopment())
 
 
 var logger = LoggerFactory.Create(builder => builder.AddNLog()).CreateLogger<Program>();
+var token = builder.Configuration.GetValue<string>("Bot:Token");// ?? "6581396259:AAHak1OPEZiUJ5R0bSJDb3GZQe9MnSuuznc";
 
 
 app.UseHttpsRedirection();
@@ -66,18 +74,20 @@ app.UseAuthorization();
 app.MapControllers();
 
 
+
+
 //Создание и запуск бота
 var botInstance = new PRBot(new TelegramConfig
     {
         //Token = "6679926909:AAFQ8OSxR3GtYFRXepqfrX7dvkwkczVAgoI", // Production
-        Token = "6581396259:AAHak1OPEZiUJ5R0bSJDb3GZQe9MnSuuznc", // Demo
+        //Token = "6581396259:AAHak1OPEZiUJ5R0bSJDb3GZQe9MnSuuznc", // Demo
+        Token = token,
         ClearUpdatesOnStart = true,
         BotId = 0
     },
 
     app.Services.GetService<IServiceProvider>()
 );
-
 
 await botInstance.Start();
 botInstance.Handler.Router.OnMissingCommand += RouterOnMissingCommand;
@@ -100,6 +110,11 @@ await botInstance.botClient.SetMyCommandsAsync(new List<BotCommand>()
     {
         Command = "whoshere",
         Description = "На работе сегодня"
+    },
+    new BotCommand()
+    {
+        Command = "start",
+        Description = "Главное меню"
     }
 });
 

@@ -14,9 +14,15 @@ using System.Diagnostics;
 using System.Globalization;
 using Spire.Xls;
 using System.Data;
+using Api.BotControllers.Keyboard;
 using Microsoft.IdentityModel.Tokens;
 using PRTelegramBot.Utils.Controls.CalendarControl.Common;
 using Group = Application.DTOs.Group;
+using GWT;
+//using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using static System.Net.Mime.MediaTypeNames;
+using Spire.Xls.Core;
+using User = Domain.User;
 
 
 namespace Api.BotControllers.Dialog;
@@ -33,7 +39,7 @@ public class CreateReportForDay
         _logger = logger;
     }
 
-      
+
 
     //[ReplyMenuHandler("/start")]
     [ReplyMenuHandler("Хронос")]
@@ -105,7 +111,7 @@ public class CreateReportForDay
 
     [ReplyMenuHandler("Сегодня")]
     public async Task Today(ITelegramBotClient client, Update update)
-    { 
+    {
         //client.InvokeCommonLog("Отчет за сегодня");
         _logger.LogInformation($"{update.GetInfoUser()} запросил отчет за сегодня");
 
@@ -155,77 +161,33 @@ public class CreateReportForDay
     [ReplyMenuHandler("Вчера")]
     public async Task Yesterday(ITelegramBotClient client, Update update)
     {
-        //Stopwatch stopwatch = new Stopwatch();
-        ////засекаем время начала операции
-        //stopwatch.Start();
 
-        var startDateTime = DateTime.Parse($"{DateTime.Now.AddDays(-1):yyyy/MM/dd} 04:00");
-        //var endDateTime = DateTime.Parse($"{DateTime.Now:yyyy/MM/dd} 23:59");
-
+        var startDateTime = DateTime.Today.AddDays(-1).AddHours(6);
 
 
         var res = await _report.GetReportByReaders(startDateTime, startDateTime.AddHours(30), new List<int> { 141, 87 }, new List<int>() { 142, 88 });
 
 
         var usrList = res.Workers.Where(e => e.WorkTimes.Count > 0).ToList();
-        var test = usrList.GroupBy(e => e.Group.Name).Select(e => new Group() { Name = e.Key, Workers = e.ToList() })
+        var groups = usrList.GroupBy(e => e.Group.Name).Select(e => new Group() { Name = e.Key, Workers = e.ToList() })
             .ToList();
 
-        if (test.Count == 0)
+        if (groups.Count == 0)
         {
             await PRTelegramBot.Helpers.Message.Send(client, update, "Информация за указанный период отсутствует 🤷‍♂️");
             return;
         }
 
-        //stopwatch.Stop();
-        ////смотрим сколько миллисекунд было затрачено на выполнение
-        //Console.WriteLine(stopwatch.ElapsedMilliseconds);
-
-        foreach (var t in test)
+        foreach (var group in groups)
         {
             var msg = new StringBuilder();
-            msg.Append($"<b>#⃣ {t.Name} #⃣</b>\n\r");
-            msg.AppendJoin("\n", t.Workers.Select(e => e.Name = $"🙎‍♂️ {e.Name} 👉 {e.TotalTime}").OrderBy(e => e));
+            msg.Append($"<b>#⃣ {group.Name} #⃣</b>\n\r");
+            msg.AppendJoin("\n", group.Workers.Select(e => e.Name = $"🙎‍♂️ {e.Name} 👉 {e.TotalTime}").OrderBy(e => e));
             var sendMessage = await PRTelegramBot.Helpers.Message.Send(client, update, msg.ToString());
         }
 
     }
 
-    // Отчет за прошлую неделю 
-    //[ReplyMenuHandler("Предыдущая неделя")]
-    //public async Task LastWeek(ITelegramBotClient client, Update update)
-    //{
-    //    var startTime = TimeSpan.Parse("06:00");
-    //    var endTime = TimeSpan.Parse("10:00");
-    //    Stopwatch stopwatch = new Stopwatch();
-    //    //засекаем время начала операции
-    //    stopwatch.Start();
-
-
-    //    var now = DateTime.Now;
-    //    var startDateTime = new DateTime(now.Year, now.Month, 1).AddMonths(-1).Add(startTime);
-    //    var endDateTime = new DateTime(now.Year, now.Month, 1).Add(endTime);
-
-
-    //    var res = await _report.GetReportByReaders(startDateTime, endDateTime, new List<int> { 141, 87 }, new List<int>() { 142, 88 });
-
-    //    var usrList = res.Workers.Where(e => e.WorkTimes.Count > 0).ToList();
-    //    var test = usrList.GroupBy(e => e.Group.Name).Select(e => new Group() { Name = e.Key, Workers = e.ToList() })
-    //        .ToList();
-
-    //    stopwatch.Stop();
-    //    //смотрим сколько миллисекунд было затрачено на выполнение
-    //    Console.WriteLine(stopwatch.ElapsedMilliseconds);
-
-    //    foreach (var t in test)
-    //    {
-    //        var msg = new StringBuilder();
-    //        msg.Append($"<b>#⃣ {t.Name} #⃣</b>\n\r");
-    //        msg.AppendJoin("\n", t.Workers.Select(e => e.Name = $"🙎‍♂️ {e.Name} 👉 {e.TotalTime}").OrderBy(e => e));
-    //        var sendMessage = await PRTelegramBot.Helpers.Message.Send(client, update, msg.ToString());
-    //    }
-
-    //}
 
     // Отчет за предыдущий месяц
     [ReplyMenuHandler("Предыдущий месяц")]
@@ -233,12 +195,8 @@ public class CreateReportForDay
     {
         var startTime = TimeSpan.Parse("06:00");
         var endTime = TimeSpan.Parse("10:00");
-        //Stopwatch stopwatch = new Stopwatch();
-        ////засекаем время начала операции
-        //stopwatch.Start();
-            
 
-            
+
 
         var now = DateTime.Now;
         // Отчетная дата - начало каждого месяца. Это первое число плюс время
@@ -247,21 +205,18 @@ public class CreateReportForDay
         var endDateTime = new DateTime(now.Year, now.Month, 1).Add(endTime);
 
 
-        var res = await _report.GetReportByReaders(startDateTime, endDateTime, new List<int> { 141, 87 }, new List<int>() { 142, 88 });
+        var gr = await _report.GetReportByReaders(startDateTime, endDateTime, new List<int> { 141, 87 }, new List<int>() { 142, 88 });
 
-        var usrList = res.Workers.Where(e => e.WorkTimes.Count > 0).ToList();
-        var test = usrList.GroupBy(e => e.Group.Name).Select(e => new Group() { Name = e.Key, Workers = e.ToList() })
+        var usrList = gr.Workers.Where(e => e.WorkTimes.Count > 0).ToList();
+        var groups = usrList.GroupBy(e => e.Group.Name)
+            .Select(e => new Group() { Name = e.Key, Workers = e.ToList() })
             .ToList();
 
-        //stopwatch.Stop();
-        ////смотрим сколько миллисекунд было затрачено на выполнение
-        //Console.WriteLine(stopwatch.ElapsedMilliseconds);
-
-        foreach (var t in test)
+        foreach (var group in groups)
         {
             var msg = new StringBuilder();
-            msg.Append($"<b>#⃣ {t.Name} #⃣</b>\n\r");
-            msg.AppendJoin("\n", t.Workers.Select(e => e.Name = $"🙎‍♂️ {e.Name} 👉 {e.TotalTime}").OrderBy(e => e));
+            msg.Append($"<b>#⃣ {group.Name} #⃣</b>\n\r");
+            msg.AppendJoin("\n", group.Workers.Select(e => e.Name = $"🙎‍♂️ {e.Name} 👉 {e.TotalTime}").OrderBy(e => e));
             var sendMessage = await PRTelegramBot.Helpers.Message.Send(client, update, msg.ToString());
         }
 
@@ -271,10 +226,6 @@ public class CreateReportForDay
     [ReplyMenuHandler("Текущий месяц")]
     public async Task CurrentMonthReport(ITelegramBotClient client, Update update)
     {
-        //Stopwatch stopwatch = new Stopwatch();
-        ////засекаем время начала операции
-        //stopwatch.Start();
-
         var startTime = TimeSpan.Parse("06:00");
         var now = DateTime.Now;
         // тачало текущего месяца
@@ -300,7 +251,7 @@ public class CreateReportForDay
 
 
             //var calendarMarkup = Markup.Calendar(DateTime.Today, dtfi);
-                
+
             //var option = new OptionMessage();
             //option.MenuInlineKeyboardMarkup = calendarMarkup;
             //await PRTelegramBot.Helpers.Message.Send(client, update.GetChatId(), msg.ToString(), option);
@@ -337,7 +288,16 @@ public class CreateReportForDay
         var user = await _userManager.GetUserListAsync();
 
         var sb = new StringBuilder();
-        sb.AppendJoin("\n", user.Select(e => e.Name = $"/u{e.Id} {e.Name}"));
+        //sb.AppendJoin("\n", user.Select(e => e.Name = $"/u{e.Id} {e.Name}  {e.LastUsedReaderName}"));
+        foreach (var u in user.Where(e=>e.LastUsedReaderName is not null).GroupBy(e=>e.LastUsedReaderName))
+        {
+            var u1 = user.Where(e=>e.LastUsedReaderName == u.Key).ToList();
+            Console.WriteLine($"-------{u.Key}-------");
+            foreach (var tUser in u1)
+            {
+                Console.WriteLine(tUser.Name);
+            }
+        }
 
         //string msg = $"/{user.Id} {user.Name}";
 
@@ -422,27 +382,27 @@ public class CreateReportForDay
     [ReplyMenuHandler("Главное меню", "/start")]
     public async Task MainMenu(ITelegramBotClient client, Update update)
     {
-        //client.InvokeCommonLog("Простой лог");
-        //Console.WriteLine(update.GetInfoUser());
+
         string msg = "Главное меню";
-        //Создаем настройки сообщения
-        var option = new OptionMessage();
+        //var option = new OptionMessage();
 
-        //Создаем список для меню
-        var menuList = new List<KeyboardButton>();
+        ////Создаем список для меню
+        //var menuList = new List<KeyboardButton>();
 
-        menuList.Add(new KeyboardButton("👷‍♂️Кто на работе"));
-        menuList.Add(new KeyboardButton("Отчет"));
-        menuList.Add(new KeyboardButton("🟢 Online"));
-        menuList.Add(new KeyboardButton("🛠 Настройка"));
-        menuList.Add(new KeyboardButton("Трекинг"));
-        menuList.Add(new KeyboardButton("commands"));
+        //menuList.Add(new KeyboardButton("👷‍♂️Кто на работе"));
+        //menuList.Add(new KeyboardButton("Отчет"));
+        //menuList.Add(new KeyboardButton("🟢 Online"));
+        //menuList.Add(new KeyboardButton("🛠 Настройка"));
+        //menuList.Add(new KeyboardButton("Трекинг"));
+        //menuList.Add(new KeyboardButton("commands"));
 
-        var menu = MenuGenerator.ReplyKeyboard(2, menuList, true);
+        //var menu = MenuGenerator.ReplyKeyboard(2, menuList, true);
 
-        option.MenuReplyKeyboardMarkup = menu;
+        //option.MenuReplyKeyboardMarkup = menu;
 
-        await PRTelegramBot.Helpers.Message.Send(client, update, msg, option);
+        
+
+        await PRTelegramBot.Helpers.Message.Send(client, update, msg, Menu.MainMenuKeyboard());
         await PRTelegramBot.Helpers.Message.DeleteChat(client, update.Message.Chat.Id, update.Message.MessageId);
     }
 
@@ -472,9 +432,9 @@ public class CreateReportForDay
         var option1 = new OptionMessage();
         option1.MenuInlineKeyboardMarkup = calendarMarkup;
 
-           
+
         await PRTelegramBot.Helpers.Message.Send(client, update.GetChatId(), $"Выберите дату    11111111111111:", option1);
-            
+
         //await PRTelegramBot.Helpers.Message.Send(client, update, msg, option);
 
     }
@@ -493,7 +453,7 @@ public class CreateReportForDay
     //        {
     //            var monthYearMarkup = Markup.Calendar(DateTime.Today, dtfi);
     //            var option = new OptionMessage();
-                    
+
     //            option.MenuInlineKeyboardMarkup = monthYearMarkup;
     //            //await PRTelegramBot.Helpers.Message.EditInline(botClient, update.CallbackQuery.Message.Chat.Id, update.CallbackQuery.Message.Code, option);
     //            await PRTelegramBot.Helpers.Message.Edit(botClient, update.CallbackQuery.Message.Chat.Id,
@@ -542,25 +502,10 @@ public class CreateReportForDay
 
     //}
 
-    [ReplyMenuHandler("👷‍♂️Кто на работе", "/whoshere")]
+    [ReplyMenuHandler("👷‍♂️Кто на работе", "/whoshere","/workerstoday")] //Workers Today - рабочие сегодня
     public async Task Whoshere(ITelegramBotClient client, Update update)
     {
-           
-        //await Task.Delay(60000);
 
-        //await _report.CurrentWorkerList();
-        //var res = await _report.GetReportByReaders(DateTime.Parse("2024-01-31 04:00:00.00"),
-        //    DateTime.Now, new List<int> { 113 }, new List<int>() { 114 });
-        //var usrList = res.Workers.Where(e => e.WorkTimes.Count > 0).ToList();
-        //var test = usrList.GroupBy(e => e.Group.Name).Select(e => new Group() { Name = e.Key, Workers = e.ToList() }).ToList();
-
-        //foreach (var t in test)
-        //{
-        //    var msg = new StringBuilder();
-        //    msg.Append($"<b>#⃣ {t.Name} #⃣</b>\n\r");
-        //    msg.AppendJoin("\n", t.Workers.Select(e => e.Name = $"🙎‍♂️ {e.Name} 👉 {e.TotalTime}"));
-        //    var sendMessage = await PRTelegramBot.Helpers.Message.Send(client, update, msg.ToString());
-        //}
         var workersToday = await _report.GetWorkersTodayAsync();
         if (workersToday.Count == 0)
         {
@@ -569,8 +514,8 @@ public class CreateReportForDay
         }
 
         var msg = new StringBuilder();
-        var m = msg.AppendJoin("\n", workersToday.Select(e=>$"👷‍♂️[{e.Group.Id}] {e.Name}"));
-        await PRTelegramBot.Helpers.Message.Send(client, update, m.ToString());
+        var m = msg.AppendJoin("\n", workersToday.Select(e => $"👷‍♂️[{e.Group.Id}] {e.Name}"));
+        await PRTelegramBot.Helpers.Message.Send(client, update, m.ToString(),Menu.MainMenuKeyboard());
     }
 
 
@@ -578,14 +523,14 @@ public class CreateReportForDay
     //[ReplyMenuHandler("Трекинг")]
     public async Task Tracking(ITelegramBotClient client, Update update)
     {
-            
+
         //var startDateTime = DateTime.Parse($"{DateTime.Now:yyyy/MM/dd} 04:00");
         //var endDateTime = DateTime.Parse($"{DateTime.Now:yyyy/MM/dd} 23:59");
         var startTime = TimeSpan.Parse("06:00");
         var endTime = TimeSpan.Parse("10:00");
         Stopwatch stopwatch = new Stopwatch();
         //засекаем время начала операции
-            
+
 
 
         var now = DateTime.Now;
@@ -595,7 +540,7 @@ public class CreateReportForDay
         var endDateTime = new DateTime(now.Year, now.Month, 1).Add(endTime);
         await PRTelegramBot.Helpers.Message.Send(client, update, "Обработка запроса...");
         stopwatch.Start();
-        var userList = await _report.GetUserListWithEventsByDateRange(startDateTime, endDateTime);
+        var userList = await _report.GetUsersAsync(startDateTime, endDateTime);
         stopwatch.Stop();
 
         //смотрим сколько миллисекунд было затрачено на выполнение
@@ -621,13 +566,13 @@ public class CreateReportForDay
 
 
 
-        var groups = userList.GroupBy(e=>e.Group.Name);
+        var groups = userList.GroupBy(e => e.Group.Name);
 
 
         foreach (var group in groups)
         {
             Console.WriteLine(group.Key);
-                
+
             foreach (var user in group)
             {
                 //Console.WriteLine(user.Name);
@@ -678,14 +623,14 @@ public class CreateReportForDay
 
         update.RegisterStepHandler(new StepTelegram(PeriodStep, new CreateReportCache()));
 
-            
+
 
         await PRTelegramBot.Helpers.Message.Send(client, update, "Укажите пожалуйста период в формате ДДММГГГГ - ДДММГГГГ");
     }
 
 
 
-    public  async Task PeriodStep(ITelegramBotClient client, Update update)
+    public async Task PeriodStep(ITelegramBotClient client, Update update)
     {
         if (update.Message != null)
         {
@@ -696,8 +641,8 @@ public class CreateReportForDay
             if (date.Length == 2 && DateTime.TryParse(date[0], out start) && DateTime.TryParse(date[1], out end))
             {
                 if (end > start) Console.WriteLine(date.ToString());
-                   
-                var res = await _report.GetReportByReaders(start.AddHours(6), end.AddHours(10), new List<int> { 141}, new List<int>() { 142});
+
+                var res = await _report.GetReportByReaders(start.AddHours(6), end.AddHours(10), new List<int> { 141 }, new List<int>() { 142 });
                 var usrList = res.Workers.Where(e => e.WorkTimes.Count > 0).ToList();
                 var test = usrList.GroupBy(e => e.Group.Name).Select(e => new Group() { Name = e.Key, Workers = e.ToList() })
                     .ToList();
@@ -723,11 +668,11 @@ public class CreateReportForDay
                 }
 
             }
-               
-                
+
+
 
         }
-            
+
 
     }
 
@@ -764,9 +709,9 @@ public class CreateReportForDay
         var sendMessage = await PRTelegramBot.Helpers.Message.Send(client, update, "Подготовка документа к отправке");
 
         using var workbook = new Workbook();
-            
+
         workbook.Version = ExcelVersion.Version2016;
-          
+
         workbook.Worksheets.Clear();
         //var worksheet = workbook.Worksheets.Add("Отчет за месяц");
         //CellStyle style = workbook.Styles.Add("newStyle");
@@ -781,13 +726,13 @@ public class CreateReportForDay
 
         var quickReportWorksheet = workbook.Worksheets.Add("Краткий отчет");
         using var quickReportTable = new DataTable();
-            
-            
+
+
         quickReportTable.Columns.Add("Ф.И.О.", typeof(string));
         quickReportTable.Columns.Add("Итого", typeof(string));
         quickReportTable.Columns.Add("Участок", typeof(string));
 
-        foreach (var group in test.OrderBy(e=>e.Name).OrderByDescending(e=>e.Workers.Count))
+        foreach (var group in test.OrderBy(e => e.Name).OrderByDescending(e => e.Workers.Count))
         {
             var detailsReportWorksheet = workbook.Worksheets.Add(group.Name);
 
@@ -799,7 +744,7 @@ public class CreateReportForDay
             detailsTable.Columns.Add("Устройство выхода", typeof(string));
             detailsTable.Columns.Add("Время работы", typeof(string));
 
-            foreach (var user in group.Workers.OrderBy(e=>e.Name))
+            foreach (var user in group.Workers.OrderBy(e => e.Name))
             {
 
                 DataRow quickReportRow = quickReportTable.NewRow();
@@ -822,18 +767,18 @@ public class CreateReportForDay
 
                 }
                 detailsTable.Rows.Add(detailsTable.NewRow());
-                    
+
             }
 
             quickReportWorksheet.InsertDataTable(quickReportTable, true, 1, 1, true);
 
             quickReportTable.Rows.Add(quickReportTable.NewRow());
-                
+
             detailsTable.Rows.Add(detailsTable.NewRow());
 
             detailsReportWorksheet.InsertDataTable(detailsTable, true, 1, 1, true);
             quickReportWorksheet.AllocatedRange.AutoFitColumns();
-                
+
             var filters = quickReportWorksheet.AutoFilters;
             filters.Range = quickReportWorksheet.Range[1, 3, quickReportWorksheet.LastRow, 3];
 
@@ -844,7 +789,7 @@ public class CreateReportForDay
             detailsReportWorksheet.AllocatedRange.AutoFitColumns();
 
         }
-        quickReportWorksheet.Range[1,2, quickReportWorksheet.LastRow, 2].Style.HorizontalAlignment = HorizontalAlignType.Center;
+        quickReportWorksheet.Range[1, 2, quickReportWorksheet.LastRow, 2].Style.HorizontalAlignment = HorizontalAlignType.Center;
         quickReportWorksheet.Range[1, 2, quickReportWorksheet.LastRow, 2].Style.Font.IsBold = true;
         quickReportWorksheet.Range[1, 1, 1, 3].Style.Font.IsBold = true;
         var start = res.Start.ToString("d");
@@ -890,4 +835,185 @@ public class CreateReportForDay
 
     #endregion
 
+
+    #region Отчет за период
+
+    [ReplyMenuHandler("1-я пол. месяца")]
+    public async Task CreateReport12Month(ITelegramBotClient client, Update update)
+    {
+
+        await PRTelegramBot.Helpers.Message.Send(client, update, "Обработка запроса...");
+        var startTime = TimeSpan.Parse("06:00");
+        var endTime = TimeSpan.Parse("10:00");
+
+        var now = DateTime.Now;
+
+        var startDateTime = new DateTime(now.Year, now.Month, 1).Add(startTime);
+        var endDateTime = new DateTime(now.Year, now.Month, 16).Add(endTime);
+
+        await PRTelegramBot.Helpers.Message.Send(client, update, "Обращение к базе данных");
+        var inputReader = new List<int> { 141 };
+        var outputReader = new List<int>() { 142 };
+
+        var report = await _report.GetReportByReaders(startDateTime, endDateTime, inputReader, outputReader);
+        var usrList = report.Workers.Where(e => e.WorkTimes.Count > 0).ToList();
+
+        await PRTelegramBot.Helpers.Message.Send(client, update, $"Подготовка отчета с {startDateTime:g} по {endDateTime:g}, по устройствам Хронос-прибыл - Хронос-убыл");
+        var workbook = await GenerateReportFileStreamAsync(usrList);
+
+
+        await using var ms = new MemoryStream();
+        workbook.SaveToStream(ms, FileFormat.Version2016);
+        ms.Seek(0, SeekOrigin.Begin);
+
+        var file = InputFile.FromStream(ms, $"отчет c {startDateTime:d} - {endDateTime:d}.xlsx");
+        var send = await client.SendDocumentAsync(update.GetChatId(), file);
+        workbook.Dispose();
+    }
+
+
+    [ReplyMenuHandler("2-я пол. месяца")]
+    public async Task CreateReport22Month(ITelegramBotClient client, Update update)
+    {
+        await PRTelegramBot.Helpers.Message.Send(client, update, "Обработка запроса...");
+        var startTime = TimeSpan.Parse("06:00");
+        var endTime = TimeSpan.Parse("10:00");
+
+        var now = DateTime.Now;
+        //var now = new DateTime(2024, 5, 17);
+
+        var startDateTime = new DateTime(now.Year, now.Month, 16).Add(startTime);
+        var endDateTime = new DateTime(now.Year, now.Month, 1).Add(endTime);
+        // если с начало месяца не прошло 15 дней, то отчет должен быть сформирован за вторую половину предыдущего месяца
+        if (now.Day <= 15)
+        {
+            startDateTime = startDateTime.AddMonths(-1);
+        }
+        // если прошло больше 15, то отчет формируется за текущий месяц. 
+        if (now.Day > 15)
+        {
+            endDateTime = endDateTime.AddMonths(1);
+        }
+
+
+        await PRTelegramBot.Helpers.Message.Send(client, update, "Обращение к базе данных");
+        var inputReader = new List<int> { 141 };
+        var outputReader = new List<int>() { 142 };
+
+
+        var report = await _report.GetReportByReaders(startDateTime, endDateTime, inputReader, outputReader);
+        var usrList = report.Workers.Where(e => e.WorkTimes.Count > 0).ToList();
+        if (usrList.IsNullOrEmpty())
+        {
+            var sendMessage = await PRTelegramBot.Helpers.Message.Send(client, update, "Информация за указанный период отсутствует 🤷‍♂️");
+            return;
+        }
+
+        var workbook = await GenerateReportFileStreamAsync(usrList);
+
+        await PRTelegramBot.Helpers.Message.Send(client, update, $"Подготовка отчета с {startDateTime:g} по {endDateTime:g}, по устройствам Хронос-прибыл - Хронос-убыл");
+
+        await using var ms = new MemoryStream();
+        workbook.SaveToStream(ms, FileFormat.Version2016);
+        ms.Seek(0, SeekOrigin.Begin);
+
+        var file = InputFile.FromStream(ms, $"отчет c {startDateTime:d} - {endDateTime:d}.xlsx");
+        var send = await client.SendDocumentAsync(update.GetChatId(), file);
+        workbook.Dispose();
+    }
+
+    #endregion
+
+
+    public async Task<Workbook> GenerateReportFileStreamAsync(List<Application.DTOs.Worker> usrList)
+    {
+        return await Task.Run(() =>
+        {
+            var groups = usrList.GroupBy(e => e.Group.Name)
+            .Select(e => new Group() { Name = e.Key, Workers = e.ToList() })
+            .OrderBy(e => e.Name)
+            .ToList();
+
+
+            //using var workbook = new Workbook();
+            var workbook = new Workbook
+            {
+                Version = ExcelVersion.Version2016
+            };
+
+            workbook.Worksheets.Clear();
+
+
+            var quickReportWorksheet = workbook.Worksheets.Add("Краткий отчет");
+            using var quickReportTable = new DataTable();
+
+
+            quickReportTable.Columns.Add("Ф.И.О.", typeof(string));
+            quickReportTable.Columns.Add("Итого", typeof(string));
+            quickReportTable.Columns.Add("Участок", typeof(string));
+
+            foreach (var group in groups.OrderBy(e => e.Name).OrderByDescending(e => e.Workers.Count))
+            {
+                var detailsReportWorksheet = workbook.Worksheets.Add(group.Name);
+
+                var detailsTable = new DataTable();
+                detailsTable.Columns.Add("Ф.И.О", typeof(string));
+                detailsTable.Columns.Add("Дата/время входа", typeof(string));
+                detailsTable.Columns.Add("Устройство входа", typeof(string));
+                detailsTable.Columns.Add("Дата/время выхода", typeof(string));
+                detailsTable.Columns.Add("Устройство выхода", typeof(string));
+                detailsTable.Columns.Add("Время работы", typeof(string));
+
+                foreach (var user in group.Workers.OrderBy(e => e.Name))
+                {
+
+                    DataRow quickReportRow = quickReportTable.NewRow();
+                    quickReportRow[0] = user.FullName;
+                    quickReportRow[1] = user.TotalTime;
+                    quickReportRow[2] = user.Group!.Name;
+
+                    quickReportTable.Rows.Add(quickReportRow);
+
+                    foreach (var wt in user.WorkTimes)
+                    {
+                        DataRow dataRow = detailsTable.NewRow();
+                        dataRow[0] = user.Name;
+                        dataRow[1] = wt.EntryTime.ToString("G");
+                        dataRow[2] = wt.FirstReader;
+                        dataRow[3] = wt.ExitTime.ToString("G");
+                        dataRow[4] = wt.LastReader;
+                        dataRow[5] = wt.Tot;
+                        detailsTable.Rows.Add(dataRow);
+
+                    }
+
+                    detailsTable.Rows.Add(detailsTable.NewRow());
+
+                }
+
+                quickReportWorksheet.InsertDataTable(quickReportTable, true, 1, 1, true);
+
+                quickReportTable.Rows.Add(quickReportTable.NewRow());
+
+                detailsTable.Rows.Add(detailsTable.NewRow());
+
+                detailsReportWorksheet.InsertDataTable(detailsTable, true, 1, 1, true);
+                quickReportWorksheet.AllocatedRange.AutoFitColumns();
+
+                var filters = quickReportWorksheet.AutoFilters;
+                filters.Range = quickReportWorksheet.Range[1, 3, quickReportWorksheet.LastRow, 3];
+
+                filters.Filter();
+
+                detailsReportWorksheet.AllocatedRange.AutoFitColumns();
+
+            }
+
+            quickReportWorksheet.Range[1, 2, quickReportWorksheet.LastRow, 2].Style.HorizontalAlignment =
+                HorizontalAlignType.Center;
+            quickReportWorksheet.Range[1, 2, quickReportWorksheet.LastRow, 2].Style.Font.IsBold = true;
+            quickReportWorksheet.Range[1, 1, 1, 3].Style.Font.IsBold = true;
+            return workbook;
+        });
+    }
 }
