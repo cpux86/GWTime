@@ -18,13 +18,13 @@ namespace Api.Controllers
 
         //}
 
-        [HttpPost]
-        [Route("tracking")]
-        public void TrackingByUserIdAndDate(List<WorkingDays> workingDays)
-        {
+        //[HttpPost]
+        //[Route("tracking")]
+        //public void TrackingByUserIdAndDate(List<WorkingDays> workingDays)
+        //{
 
-            Console.WriteLine();
-           // tracking / userId = 5 & year = 2024 & mount = 01 & days = 1,2,
-        }
+        //    Console.WriteLine();
+        //   // tracking / userId = 5 & year = 2024 & mount = 01 & days = 1,2,
+        //}
     }
 }

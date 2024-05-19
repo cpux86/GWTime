@@ -330,7 +330,7 @@ namespace Api.BotControllers.Dialog
                     sb.Append($"<b>{cache.FullName}</b>\n");
 
                     var t1 = sb.AppendJoin("\n", events.OrderBy(e => e.DateTime)
-                        .Select(e => $"<b>{e.DateTime:t}</b> {e.Reader.Name}"));
+                        .Select(e => $"[{e.DateTime:t}] {e.Reader.Name}"));
 
                     //var t = sb.ToString();
                     //Console.WriteLine(t.Length);

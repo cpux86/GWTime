@@ -93,6 +93,7 @@ await botInstance.Start();
 botInstance.Handler.Router.OnMissingCommand += RouterOnMissingCommand;
 //botInstance.Handler.OnPreUpdate += Handler_OnPreUpdate;
 
+
 //static async Task<PRTelegramBot.Models.Enums.ResultUpdate> Handler_OnPreUpdate(ITelegramBotClient arg1, Update update)
 //{
 //    Console.WriteLine();

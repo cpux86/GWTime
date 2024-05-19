@@ -12,128 +12,28 @@ namespace Api.BotControllers.Dialog
 {
     public class CreateReport
     {
-        [ReplyMenuHandler("Отчет")]
-        public async Task StartDialogAsync(ITelegramBotClient client, Update update)
-        {
-            //var msg = "Выберите период";
-            ////Создаем настройки сообщения
-            //var option = new OptionMessage();
+        private const string SelectPeriodMsg = "Выберите период";
 
-            ////Создаем список для меню
-            //var menuList = new List<KeyboardButton>
-            //{
-            //    new KeyboardButton("Сегодня"),
-            //    new KeyboardButton("Вчера"),
-            //    new KeyboardButton("Текущая неделя"),
-            //    new KeyboardButton("Предыдущая неделя"),
-            //    new KeyboardButton("1-я пол. месяца"),
-            //    new KeyboardButton("2-я пол. месяца"),
-            //    new KeyboardButton("Текущий месяц"),
-            //    new KeyboardButton("Предыдущий месяц"),
-            //    //new KeyboardButton("ПОДРОБНЫЙ ОТЧЕТ")
-            //    //new KeyboardButton("Другое")
-            //};
-
-            //menuList.Add(new KeyboardButton("ПОДРОБНЫЙ ОТЧЕТ"));
-
-            //var menu = MenuGenerator.ReplyKeyboard(2, menuList, true, "Главное меню");
-
-            //option.MenuReplyKeyboardMarkup = menu;
-
-            ////update.RegisterStepHandler(new StepTelegram(SelectPeriod, new CreateReportCache()));
-
-            //await PRTelegramBot.Helpers.Message.Send(client, update, msg, option);
-            //await PRTelegramBot.Helpers.Message.DeleteChat(client, update.Message.Chat.Id, update.Message.MessageId);
-
-            await DetailsReportCommand(client, update);
-
-        }
-
-
-
-
-        //public List<KeyboardButton> PeriodMenu => new List<KeyboardButton>
-        //{
-        //    new KeyboardButton("Сегодня"),
-        //    new KeyboardButton("Вчера"),
-        //    new KeyboardButton("Текущая неделя"),
-        //    new KeyboardButton("Предыдущая неделя"),
-        //    new KeyboardButton("1-я пол. месяца"),
-        //    new KeyboardButton("2-я пол. месяца"),
-        //    new KeyboardButton("Текущий месяц"),
-        //    new KeyboardButton("Предыдущий месяц"),
-        //};
-
-
-        [ReplyMenuHandler("ПОДРОБНЫЙ ОТЧЕТ")]
+        [ReplyMenuHandler("Отчет", "КРАТКИЙ ОТЧЕТ")]
         public async Task QuickReportCommand(ITelegramBotClient client, Update update)
         {
-            var msg = "Выберите период";
-            //Создаем настройки сообщения
-            //var option = new OptionMessage();
+            // клавиатура для быстрого отчета
+            var option = Menu.ReportKeyboard(ReportType.Quick);
+            update.GetCacheData<CreateReportCache>().Type = ReportType.Quick;
 
-            //Создаем список для меню
-            //var menuList = new List<KeyboardButton>
-            //{
-            //    new KeyboardButton("Сегодня"),
-            //    new KeyboardButton("Вчера"),
-            //    new KeyboardButton("Текущая неделя"),
-            //    new KeyboardButton("Предыдущая неделя"),
-            //    new KeyboardButton("1-я пол. месяца"),
-            //    new KeyboardButton("2-я пол. месяца"),
-            //    new KeyboardButton("Текущий месяц"),
-            //    new KeyboardButton("Предыдущий месяц"),
-            //};
-
-            //menuList = PeriodMenu;
-
-
-            //menuList.Add(new KeyboardButton("КРАТКИЙ ОТЧЕТ"));
-
-            //var menu = MenuGenerator.ReplyKeyboard(2, menuList, true, "Главное меню");
-
-            //option.MenuReplyKeyboardMarkup = menu;
-
-            //update.RegisterStepHandler(new StepTelegram(SelectPeriod, new CreateReportCache()));
-
-            var optionMessage = Menu.DetailsReportKeyboard();
-
-            await PRTelegramBot.Helpers.Message.Send(client, update, msg, optionMessage);
-            //await PRTelegramBot.Helpers.Message.DeleteChat(client, update.Message.Chat.Id, update.Message.MessageId);
+            await PRTelegramBot.Helpers.Message.Send(client, update, SelectPeriodMsg, option);
+            
         }
 
-        [ReplyMenuHandler("КРАТКИЙ ОТЧЕТ")]
-        public async Task DetailsReportCommand(ITelegramBotClient client, Update update)
+        
+        [ReplyMenuHandler("ПОДРОБНЫЙ ОТЧЕТ")]
+        public async Task DetailedReportCommand(ITelegramBotClient client, Update update)
         {
-            var msg = "Выберите период";
-            //Создаем настройки сообщения
-            //var option = new OptionMessage();
+            
+            var optionMessage = Menu.ReportKeyboard(ReportType.Detailed);
+            update.GetCacheData<CreateReportCache>().Type = ReportType.Detailed;
 
-            //Создаем список для меню
-            //var menuList = new List<KeyboardButton>
-            //{
-            //    new KeyboardButton("Сегодня"),
-            //    new KeyboardButton("Вчера"),
-            //    new KeyboardButton("Текущая неделя"),
-            //    new KeyboardButton("Предыдущая неделя"),
-            //    new KeyboardButton("1-я пол. месяца"),
-            //    new KeyboardButton("2-я пол. месяца"),
-            //    new KeyboardButton("Текущий месяц"),
-            //    new KeyboardButton("Предыдущий месяц"),
-            //};
-            //menuList = PeriodMenu;
-            //menuList.Add(new KeyboardButton("ПОДРОБНЫЙ ОТЧЕТ"));
-
-            //var menu = MenuGenerator.ReplyKeyboard(2, menuList, true, "Главное меню");
-
-            //option.MenuReplyKeyboardMarkup = menu;
-
-            //update.RegisterStepHandler(new StepTelegram(SelectPeriod, new CreateReportCache()));
-
-            var optionMessage = Menu.QuickReportKeyboard();
-
-            await PRTelegramBot.Helpers.Message.Send(client, update, msg, optionMessage);
-            //await PRTelegramBot.Helpers.Message.DeleteChat(client, update.Message.Chat.Id, update.Message.MessageId);
+            await PRTelegramBot.Helpers.Message.Send(client, update, SelectPeriodMsg, optionMessage);
         }
 
 
@@ -187,13 +87,14 @@ namespace Api.BotControllers.Dialog
         {
             var handler = update.GetStepHandler<StepTelegram>();
             var cache = handler.GetCache<CreateReportCache>();
+            cache.Type = ReportType.Quick;
             // ✅
             menuList.Find(e => e.Text == update.Message.Text).Text = $"✅ {update.Message.Text}";
 
             var menu = MenuGenerator.ReplyKeyboard(2, menuList, true, "Главное меню");
             var option = new OptionMessage();
             option.MenuReplyKeyboardMarkup = menu;
-           
+
 
             await PRTelegramBot.Helpers.Message.Send(client, update, cache.Text, option);
             //await PRTelegramBot.Helpers.Message.DeleteChat(client, update.Message.Chat.Id, update.Message.Code);
