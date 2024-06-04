@@ -34,12 +34,20 @@ namespace Api.BotControllers.Keyboard
             return option;
         }
 
+
+        private static List<KeyboardButton> SelectUsersMenu => new()
+        {
+            new KeyboardButton("По сотруднику"),
+            new KeyboardButton("По группе"),
+            new KeyboardButton("По всем"),
+        };
+
         private static List<KeyboardButton> PeriodMenu => new()
         {
             new KeyboardButton("Сегодня"),
             new KeyboardButton("Вчера"),
-            new KeyboardButton("Текущая неделя"),
-            new KeyboardButton("Предыдущая неделя"),
+            //new KeyboardButton("Текущая неделя"),
+            //new KeyboardButton("Предыдущая неделя"),
             new KeyboardButton("1-я пол. месяца"),
             new KeyboardButton("2-я пол. месяца"),
             new KeyboardButton("Текущий месяц"),

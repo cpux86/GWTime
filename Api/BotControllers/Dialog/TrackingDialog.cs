@@ -53,9 +53,13 @@ namespace Api.BotControllers.Dialog
         public async Task Tracking(ITelegramBotClient client, Update update)
         {
 
+
             //_logger.LogError("Это ошибка");
             var msg = "Кто вас интересует?";
+
+            
             update.RegisterStepHandler(new StepTelegram(FindUserByName, new TrackingCache()));
+           
             var options = new OptionMessage();
             
             //var users = await _userManager.GetUserListAsync();
@@ -75,6 +79,7 @@ namespace Api.BotControllers.Dialog
             options.MenuReplyKeyboardMarkup = menu;
 
             await Helpers.Message.Send(client, update, msg, options);
+            
         }
 
         public async Task FindUserByName(ITelegramBotClient client, Update update)
@@ -89,8 +94,15 @@ namespace Api.BotControllers.Dialog
             //stopwatch.Start();
 
             var users = await _userManager.GetUserByNameAsync(userName);
+
+            //foreach (var usr in users)
+            //{
+            //    Console.WriteLine(usr.FullName);
+            //}
+
             
-            
+
+            var dictionary = users.ToDictionary(s => s.Key, e => e.FullName);
             var user = users.LastOrDefault();
 
             if (user == null)
@@ -117,6 +129,7 @@ namespace Api.BotControllers.Dialog
 
 
             var keyboardRows = new List<IEnumerable<InlineKeyboardButton>>();
+            
             keyboardRows.Add(Row.Date(DateTime.Today, dtfi, 0));
             keyboardRows.Add(Row.DayOfWeek(dtfi, 0));
             //var testRows = Row.Month(DateTime.Today, dtfi, 0);
@@ -339,8 +352,8 @@ namespace Api.BotControllers.Dialog
 #endif
 
                     await Helpers.Message.Edit(botClient, update.GetChatId(), update.GetMessageId(), sb.ToString(), cache.Options);
-                    //botClient.InvokeCommonLog($"Tracking по фамилии: {cache.FullName}, {command.Data.Date:d}");
-                    _logger.LogInformation($"{update.GetInfoUser()}| Tracking по фамилии: {cache.FullName}, {command.Data.Date:d}");
+                    botClient.InvokeCommonLog($"{update.GetInfoUser()}| Tracking по фамилии: {cache.FullName}, {command.Data.Date:d}");
+                    //_logger.LogInformation($"{update.GetInfoUser()}| Tracking по фамилии: {cache.FullName}, {command.Data.Date:d}");
 
                 }
             }

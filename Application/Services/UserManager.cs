@@ -44,18 +44,13 @@ namespace Application.Services
         public async Task<List<User>> GetUserByNameAsync(string username)
         {
 
-
-
-            //var r = _context.GetWorkingDaysByUserId(5);
-
-
             var users = await _context.Users
                 .AsNoTracking()
-                //.Include(e => e.Events)
                 .Include(u => u.Group)
-                .Where(u=>EF.Functions.Like(u.Name, $@"%{username}%") || EF.Functions.Like(u.FullName, $@"%{username}%"))
+                .Where(u=>EF.Functions.Like(u.Name, $@"{username}%") || EF.Functions.Like(u.FullName, $@"{username}%"))
                 //.Where(u => u.Name.StartsWith(username) || u.FullName.StartsWith(username))
-                .OrderBy(u => u.Name).ToListAsync(CancellationToken.None);
+                .OrderBy(u => u.Name)
+                .ToListAsync(CancellationToken.None);
             return users;
         }
 

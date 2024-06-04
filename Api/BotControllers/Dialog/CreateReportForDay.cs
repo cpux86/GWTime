@@ -625,6 +625,8 @@ public class CreateReportForDay
     #endregion
 
 
+
+
     #region Отчет за период
 
     [ReplyMenuHandler("Сегодня")]
@@ -635,43 +637,6 @@ public class CreateReportForDay
         // offset - 6:00 смещение
         var startDayTime = DateTime.Parse($"{DateTime.Now:yyyy/MM/dd} 06:00");
         var endDayTime = DateTime.Parse($"{DateTime.Now:yyyy/MM/dd} 23:59:59");
-
-
-        //var gwtClient = new GWT.Client("http://localhost:55222/", new HttpClient());
-
-        //var gwtReport = await gwtClient.TrackingAsync(startDateTime.AddDays(-1), endDateTime);
-        //foreach (var user in gwtReport.OrderBy(e=>e.Name))
-        //{
-
-        //    foreach (var evt in user.Events)
-        //    {
-        //        Console.WriteLine($"{user.Name} {evt.DateTime} {evt.Reader.Name}");
-
-        //    }
-        //}
-
-
-        //var gwtClient = new GWT.Client("http://localhost:55222/", new HttpClient());
-        //var repTest = await gwtClient.ReportAsync(startDateTime, endDateTime, new List<int> { 141 }, new List<int>());
-
-        //var report = await _report.GetReportByReaders(startDayTime, endDayTime, new List<int> { 141 }, new List<int>() { 142 });
-
-
-
-        //var usrList = report.Workers.Where(e => e.WorkTimes.Count > 0).ToList();
-        //var groups = usrList.GroupBy(e => e.Group.Name).Select(e => new Group() { Name = e.Key, Workers = e.ToList() })
-        //    .ToList();
-
-
-        //if (groups.Count == 0) await PRTelegramBot.Helpers.Message.Send(client, update, "Информация за указанный период отсутствует 🤷‍♂️");
-
-        //foreach (var group in groups)
-        //{
-        //    var msg = new StringBuilder();
-        //    msg.Append($"<b>#⃣ {group.Name} #⃣</b>\n\r");
-        //    msg.AppendJoin("\n", group.Workers.Select(e => e.Name = $"🙎‍♂️ {e.Name} 👉 {e.TotalTime}").OrderBy(e => e));
-        //    var sendMessage = await PRTelegramBot.Helpers.Message.Send(client, update, msg.ToString());
-        //}
 
         var reportType = update.GetCacheData<CreateReportCache>().Type;
 
@@ -690,8 +655,112 @@ public class CreateReportForDay
     }
 
 
+    [ReplyMenuHandler("Вчера")]
+    public async Task Yesterday(ITelegramBotClient client, Update update)
+    {
+        var startDateTime = DateTime.Today.AddDays(-1).AddHours(6); // вчера с 6 утра
+        var endDayTime = DateTime.Today.AddHours(10); // сегодня до 10 утра
+
+        await SendReportAsync(client, update, startDateTime, endDayTime);
+
+    }
+
+    // Отчет за текущий месяц
+    [ReplyMenuHandler("Текущий месяц")]
+    public async Task CurrentMonthReport(ITelegramBotClient client, Update update)
+    {
+        var startTime = TimeSpan.Parse("06:00");
+        var now = DateTime.Now;
+        // тачало текущего месяца
+        var startDateTime = new DateTime(now.Year, now.Month, 1).Add(startTime);
+        var endDayTime = DateTime.Now;
+
+        await SendReportAsync(client, update, startDateTime, endDayTime);
+ 
+
+    }
+
+    // Отчет за предыдущий месяц
+    [ReplyMenuHandler("Предыдущий месяц")]
+    public async Task LastMonthReport(ITelegramBotClient client, Update update)
+    {
+        var startTime = TimeSpan.Parse("06:00");
+        var endTime = TimeSpan.Parse("10:00");
+
+        var now = DateTime.Now;
+        // Отчетная дата - начало каждого месяца. Это первое число плюс время
+        var startDateTime = new DateTime(now.Year, now.Month, 1).AddMonths(-1).Add(startTime);
+        // Конечная дата, это начало следующего месяца. 
+        var endDayTime = new DateTime(now.Year, now.Month, 1).Add(endTime);
+
+        await SendReportAsync(client, update, startDateTime, endDayTime);
+    }
 
 
+    [ReplyMenuHandler("1-я пол. месяца")]
+    public async Task ReportMonthPartOne(ITelegramBotClient client, Update update)
+    {
+
+        await PRTelegramBot.Helpers.Message.Send(client, update, "Обработка запроса...");
+        var startTime = TimeSpan.Parse("06:00");
+        var endTime = TimeSpan.Parse("10:00");
+
+        var now = DateTime.Now;
+
+        var startDateTime = new DateTime(now.Year, now.Month, 1).Add(startTime);
+        var endDayTime = new DateTime(now.Year, now.Month, 16).Add(endTime);
+
+        
+        await SendReportAsync(client, update, startDateTime, endDayTime);
+
+
+    }
+
+    [ReplyMenuHandler("2-я пол. месяца")]
+    public async Task ReportMonthPartTwo(ITelegramBotClient client, Update update)
+    {
+        await PRTelegramBot.Helpers.Message.Send(client, update, "Обработка запроса...");
+        var startTime = TimeSpan.Parse("06:00");
+        var endTime = TimeSpan.Parse("10:00");
+
+        var now = DateTime.Now;
+
+        var startDateTime = new DateTime(now.Year, now.Month, 16).Add(startTime);
+        var endDayTime = new DateTime(now.Year, now.Month, 1).Add(endTime);
+
+
+        // если с начало месяца не прошло 15 дней, то отчет должен быть сформирован за вторую половину предыдущего месяца
+        if (now.Day <= 15)
+        {
+            startDateTime = startDateTime.AddMonths(-1);
+        }
+        // если прошло больше 15, то отчет формируется за текущий месяц. 
+        if (now.Day > 15)
+        {
+            endDayTime = endDayTime.AddMonths(1);
+        }
+
+        await SendReportAsync(client, update, startDateTime, endDayTime);
+
+    }
+
+    #endregion
+
+    private async Task SendReportAsync(ITelegramBotClient client, Update update, DateTime startDateTime, DateTime endDayTime)
+    {
+        var reportType = update.GetCacheData<CreateReportCache>().Type;
+        switch (reportType)
+        {
+            case ReportType.Quick:
+                await SendReportMessageAsync(client, update, startDateTime, endDayTime);
+                break;
+            case ReportType.Detailed:
+                await SendReportDocumentAsync(client, update, startDateTime, endDayTime);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
     private async Task SendReportMessageAsync(ITelegramBotClient client, Update update, DateTime startDayTime, DateTime endDayTime)
     {
         var report = await _report.GetReportByReaders(startDayTime, endDayTime, new List<int> { 141 }, new List<int>() { 142 });
@@ -738,199 +807,8 @@ public class CreateReportForDay
         var file = InputFile.FromStream(ms, $"отчет c {startDayTime:d} - {endDayTime:d}.xlsx");
         var send = await client.SendDocumentAsync(update.GetChatId(), file);
         workbook.Dispose();
+        //await file.Content.DisposeAsync();
     }
-
-
-    [ReplyMenuHandler("Вчера")]
-    public async Task Yesterday(ITelegramBotClient client, Update update)
-    {
-        var startDayTime = DateTime.Today.AddDays(-1).AddHours(6); // вчера с 6 утра
-        var endDayTime = DateTime.Today.AddHours(10); // сегодня до 10 утра
-
-        var reportType = update.GetCacheData<CreateReportCache>().Type;
-
-        switch (reportType)
-        {
-            case ReportType.Quick:
-                await SendReportMessageAsync(client, update, startDayTime, endDayTime);
-                break;
-            case ReportType.Detailed:
-                await SendReportDocumentAsync(client, update, startDayTime, endDayTime);
-                break;
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-    }
-
-    // Отчет за текущий месяц
-    [ReplyMenuHandler("Текущий месяц")]
-    public async Task CurrentMonthReport(ITelegramBotClient client, Update update)
-    {
-        var startTime = TimeSpan.Parse("06:00");
-        var now = DateTime.Now;
-        // тачало текущего месяца
-        var startDateTime = new DateTime(now.Year, now.Month, 1).Add(startTime);
-        var endDayTime = DateTime.Now;
-
-        var reportType = update.GetCacheData<CreateReportCache>().Type;
-
-        switch (reportType)
-        {
-            case ReportType.Quick:
-                await SendReportMessageAsync(client, update, startDateTime, endDayTime);
-                break;
-            case ReportType.Detailed:
-                await SendReportDocumentAsync(client, update, startDateTime, endDayTime);
-                break;
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-
-        //var report = await _report.GetReportByReaders(startDateTime, DateTime.Now, new List<int> { 141 }, new List<int>() { 142 });
-
-        //var workers = report.Workers.Where(e => e.WorkTimes.Count > 0).ToList();
-        //var groups = workers.GroupBy(e => e.Group.Name).Select(e => new Group() { Name = e.Key, Workers = e.ToList() })
-        //    .ToList();
-        //if (groups.IsNullOrEmpty())
-        //{
-        //    await PRTelegramBot.Helpers.Message.Send(client, update, "Информация за указанный период отсутствует 🤷‍♂️");
-        //    return;
-        //}
-
-
-        //foreach (var t in groups)
-        //{
-        //    var msg = new StringBuilder();
-        //    msg.Append($"<b>#⃣ {t.Name} #⃣</b>\n\r");
-        //    msg.AppendJoin("\n", t.Workers.Select(e => e.Name = $"🙎‍♂️ {e.Name} 👉 {e.TotalTime}").OrderBy(e => e));
-
-        //    var sendMessage = PRTelegramBot.Helpers.Message.Send(client, update, msg.ToString());
-        //}
-    }
-
-    // Отчет за предыдущий месяц
-    [ReplyMenuHandler("Предыдущий месяц")]
-    public async Task LastMonthReport(ITelegramBotClient client, Update update)
-    {
-        var startTime = TimeSpan.Parse("06:00");
-        var endTime = TimeSpan.Parse("10:00");
-
-        var now = DateTime.Now;
-        // Отчетная дата - начало каждого месяца. Это первое число плюс время
-        var startDateTime = new DateTime(now.Year, now.Month, 1).AddMonths(-1).Add(startTime);
-        // Конечная дата, это начало следующего месяца. 
-        var endDateTime = new DateTime(now.Year, now.Month, 1).Add(endTime);
-
-
-        var report = await _report.GetReportByReaders(startDateTime, endDateTime, new List<int> { 141 }, new List<int>() { 142 });
-
-        var usrList = report.Workers.Where(e => e.WorkTimes.Count > 0).ToList();
-        var groups = usrList.GroupBy(e => e.Group.Name)
-            .Select(e => new Group() { Name = e.Key, Workers = e.ToList() })
-            .ToList();
-
-        foreach (var group in groups)
-        {
-            var msg = new StringBuilder();
-            msg.Append($"<b>#⃣ {group.Name} #⃣</b>\n\r");
-            msg.AppendJoin("\n", group.Workers.Select(e => e.Name = $"🙎‍♂️ {e.Name} 👉 {e.TotalTime}").OrderBy(e => e));
-            var sendMessage = await PRTelegramBot.Helpers.Message.Send(client, update, msg.ToString());
-        }
-
-    }
-
-
-    [ReplyMenuHandler("1-я пол. месяца")]
-    public async Task CreateReport12Month(ITelegramBotClient client, Update update)
-    {
-
-        await PRTelegramBot.Helpers.Message.Send(client, update, "Обработка запроса...");
-        var startTime = TimeSpan.Parse("06:00");
-        var endTime = TimeSpan.Parse("10:00");
-
-        var now = DateTime.Now;
-
-        var startDateTime = new DateTime(now.Year, now.Month, 1).Add(startTime);
-        var endDateTime = new DateTime(now.Year, now.Month, 16).Add(endTime);
-
-        await PRTelegramBot.Helpers.Message.Send(client, update, "Обращение к базе данных");
-        var inputReader = new List<int> { 141 };
-        var outputReader = new List<int>() { 142 };
-
-        var report = await _report.GetReportByReaders(startDateTime, endDateTime, inputReader, outputReader);
-        var workers = report.Workers.Where(e => e.WorkTimes.Count > 0).ToList();
-
-        await PRTelegramBot.Helpers.Message.Send(client, update, $"Подготовка отчета с {startDateTime:g} по {endDateTime:g}");
-        var workbook = await GenerateReportFileStreamAsync(workers);
-
-
-        await using var ms = new MemoryStream();
-        workbook.SaveToStream(ms, FileFormat.Version2016);
-        ms.Seek(0, SeekOrigin.Begin);
-
-        var file = InputFile.FromStream(ms, $"отчет c {startDateTime:d} - {endDateTime:d}.xlsx");
-        var send = await client.SendDocumentAsync(update.GetChatId(), file);
-        workbook.Dispose();
-    }
-
-
-    [ReplyMenuHandler("2-я пол. месяца")]
-    public async Task CreateReport22Month(ITelegramBotClient client, Update update)
-    {
-        await PRTelegramBot.Helpers.Message.Send(client, update, "Обработка запроса...");
-        var startTime = TimeSpan.Parse("06:00");
-        var endTime = TimeSpan.Parse("10:00");
-
-        var now = DateTime.Now;
-
-        var startDateTime = new DateTime(now.Year, now.Month, 16).Add(startTime);
-        var endDateTime = new DateTime(now.Year, now.Month, 1).Add(endTime);
-
-
-        // если с начало месяца не прошло 15 дней, то отчет должен быть сформирован за вторую половину предыдущего месяца
-        if (now.Day <= 15)
-        {
-            startDateTime = startDateTime.AddMonths(-1);
-        }
-        // если прошло больше 15, то отчет формируется за текущий месяц. 
-        if (now.Day > 15)
-        {
-            endDateTime = endDateTime.AddMonths(1);
-        }
-
-
-        await SendReportDocumentAsync(client, update, startDateTime, endDateTime);
-
-
-
-        //await PRTelegramBot.Helpers.Message.Send(client, update, "Обращение к базе данных");
-        //var inputReader = new List<int> { 141 };
-        //var outputReader = new List<int>() { 142 };
-
-
-        //var report = await _report.GetReportByReaders(startDateTime, endDateTime, inputReader, outputReader);
-        //var workers = report.Workers.Where(e => e.WorkTimes.Count > 0).ToList();
-        //if (workers.IsNullOrEmpty())
-        //{
-        //    var sendMessage = await PRTelegramBot.Helpers.Message.Send(client, update, "Информация за указанный период отсутствует 🤷‍♂️");
-        //    return;
-        //}
-
-        //var workbook = await GenerateReportFileStreamAsync(workers);
-
-        //await PRTelegramBot.Helpers.Message.Send(client, update, $"Подготовка отчета с {startDateTime:g} по {endDateTime:g}");
-
-        //await using var ms = new MemoryStream();
-        //workbook.SaveToStream(ms, FileFormat.Version2016);
-        //ms.Seek(0, SeekOrigin.Begin);
-
-        //var file = InputFile.FromStream(ms, $"отчет c {startDateTime:d} - {endDateTime:d}.xlsx");
-        //var send = await client.SendDocumentAsync(update.GetChatId(), file);
-        //workbook.Dispose();
-    }
-
-    #endregion
-
 
     public async Task<Workbook> GenerateReportFileStreamAsync(List<Application.DTOs.Worker> usrList)
     {
