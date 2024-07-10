@@ -27,17 +27,6 @@ namespace Api.Controllers
             _reportService = reportService;
         }
 
-        //[HttpGet]
-        //[Route("{userId:int}")]
-        //public async Task<List<Event>> GetEventsByUserId(int inputReader, int outputReader, int userId)
-        //{
-        //    var sw = Stopwatch.StartNew();
-        //    var res = await _eventsService.GetEventsByUserId(inputReader, outputReader, userId);
-        //    sw.Stop();
-        //    Console.WriteLine("Finished in " + sw.Elapsed);
-        //    return res;
-        //}
-            
 
         [HttpGet]
         [Route("/")]
@@ -49,17 +38,6 @@ namespace Api.Controllers
             //Task.Delay(10000).Wait();
             //ps.Close();
         }
-
-        [HttpPost]
-        [Route("ps")]
-        public async Task GetRoutPoints([FromBody] List<WorkingDays> workingDaysList)
-        {
-            Console.WriteLine();
-        }
-
-
-
-
 
 
 
@@ -77,12 +55,6 @@ namespace Api.Controllers
         //    return await _reportService.GetUserByNameAsync(name);
         //}
 
-        //[HttpGet]
-        //[Route("user/time")]
-        //public async Task<List<Event>> GetFirstAndLastUseKey(int userId, DateTime startDate, DateTime endDate)
-        //{
-        //    return await _reportService.GetFirstAndLastUseKey(userId, startDate, endDate);
-        //}
 
         [HttpGet]
         [Route("report")]
@@ -92,13 +64,6 @@ namespace Api.Controllers
             return result;
         }
 
-        //[HttpGet]
-        //[Route("tracking")]
-        //public async Task<List<User>> GetUserListWithEventsByDateRange(DateTime startDate, DateTime endDate)
-        //{
-        //    var t = await _reportService.GetUserListWithEventsByDateRange(startDate, endDate);
-        //    return t;
-        //}
 
         [HttpGet]
         [Route("send")]

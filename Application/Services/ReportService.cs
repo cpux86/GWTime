@@ -69,12 +69,43 @@ namespace Application.Services
         /// <returns></returns>
         public async Task<List<User>> GetWorkersTodayAsync()
         {
-            
-            var readerIds = new[] {87,141,124 };
+            // учитывать время до начала рабочего дня не более
+
+
+            var dayShift = DateTime.Today.AddHours(8);
+            var nightShift = dayShift.AddHours(12);
+            var startWorkDay = DateTime.Today.AddHours(7);
+
+            var readerIds = new[] { 141, 87,/* 142, 88*/ };
             var users = await _dbContext.Events
                 .AsNoTracking()
-                .Where(e => e.DateTime > DateTime.Today && e.Code == 2)
-                //.Where(e=>readerIds.Contains(e.ReaderId))
+                //.Where(e => e.DateTime > DateTime.Today && e.Code == 2)
+                .Where(e => e.DateTime > startWorkDay && e.DateTime <= startWorkDay.AddHours(4) && e.Code == 2)
+                .Where(e=>readerIds.Contains(e.ReaderId))
+                .Include(e => e.User).ThenInclude(u => u.Group)
+                .Select(e => e.User).OrderBy(e => e.Group.Id).ThenBy(e => e.Name)
+
+                .ToListAsync(CancellationToken.None);
+
+            var t = users.DistinctBy(e => e.Name).ToList();
+            return t;
+        }
+
+        public async Task<List<User>> GetNightShiftAsync()
+        {
+            // учитывать время до начала рабочего дня не более
+
+
+            var dayShift = DateTime.Today.AddHours(8);
+            var nightShift = dayShift.AddHours(12-2);
+            var startWorkDay = DateTime.Today.AddHours(7);
+
+            var readerIds = new[] { 141, 87,/* 142, 88*/ };
+            var users = await _dbContext.Events
+                .AsNoTracking()
+                //.Where(e => e.DateTime > DateTime.Today && e.Code == 2)
+                .Where(e => e.DateTime > nightShift && e.Code == 2)
+                .Where(e => readerIds.Contains(e.ReaderId))
                 .Include(e => e.User).ThenInclude(u => u.Group)
                 .Select(e => e.User).OrderBy(e => e.Group.Id).ThenBy(e => e.Name)
 
@@ -104,7 +135,7 @@ namespace Application.Services
         public async Task<Report> GetReportByReaders(DateTime startDate, DateTime endDate, List<int> inputReader, List<int> outputReader, int messageId = 2)
         {
 
-
+            //inputReader.AddRange(outputReader);
 
             Stopwatch stopwatch = new Stopwatch();
             //засекаем время начала операции
@@ -131,6 +162,7 @@ namespace Application.Services
                 End = endDate
             };
 
+            var ids = usersList.Where(e=>e.Events.Count > 0).Select(e => e.Id).ToArray();
 
             foreach (var user in usersList)
             {
@@ -144,21 +176,28 @@ namespace Application.Services
                 worker.FullName = user.FullName;
                 worker.Name = user.Name;
 
-                var pre = new Event();
+                var prev = new Event();
                 foreach (var evt in user.Events)
                 {
-                    if (inputReader.Exists(x => x == pre.ReaderId) && outputReader.Exists(x => x == evt.ReaderId))
+                    if (inputReader.Exists(x => x == prev.ReaderId) && outputReader.Exists(x => x == evt.ReaderId))
                     {
-                        var v = new WorkTime(pre.DateTime, evt.DateTime)
+
+                        var v = new WorkTime(prev.DateTime, evt.DateTime)
                         {
-                            FirstReader = pre.Reader.Name,
+                            FirstReader = prev.Reader.Name,
                             LastReader = evt.Reader.Name
                         };
-                        worker.WorkTimes.Add(v);
-                    }
-                    pre = evt;
-                }
+                        if (v.Total < TimeSpan.FromMinutes(5))
+                        {
+                            Console.WriteLine($"ID {prev.Id} USR ID {evt.UserId} {evt.User.Name} {prev.DateTime} - {evt.DateTime} {v.Tot}");
+                        }
 
+                        worker.WorkTimes.Add(v);
+                        worker.ContractInfo = "Т/Д";
+                    }
+                    prev = evt;
+                }
+                
                 report.Workers.Add(worker);
 
             }
@@ -196,7 +235,7 @@ namespace Application.Services
         }
 
         /// <summary>
-        /// Возвращает даты рабочих дней
+        /// Возвращает рабочие дни месяца 
         /// </summary>
         /// <param name="userId"></param>
         /// <returns></returns>

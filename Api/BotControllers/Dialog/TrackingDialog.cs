@@ -21,16 +21,31 @@ using System;
 using PRTelegramBot.Utils;
 using System.Collections.Generic;
 using Domain;
-using PRTelegramBot.Interface;
+using PRTelegramBot.Interfaces;
 using System.Diagnostics;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using Telegram.Bot.Types.Enums;
 using GWT;
 using NLog.Extensions.Logging;
 using User = Domain.User;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 
 namespace Api.BotControllers.Dialog
 {
+   
+    public class CustomCalendarCommand : CalendarTCommand
+    {
+        [JsonProperty("uid")]
+        public int UserId { get; set; }
+        public CustomCalendarCommand(DateTime date, int userId, int command = 0) : base(date, command)
+        {
+            UserId = userId;
+        }
+    }
 
+    [BotHandler]
     public class TrackingDialog
     {
         private readonly IReportService _reportService;
@@ -52,12 +67,8 @@ namespace Api.BotControllers.Dialog
         [ReplyMenuHandler("Трекинг", "/tracking")]
         public async Task Tracking(ITelegramBotClient client, Update update)
         {
-
-
-            //_logger.LogError("Это ошибка");
             var msg = "Кто вас интересует?";
 
-            
             update.RegisterStepHandler(new StepTelegram(FindUserByName, new TrackingCache()));
            
             var options = new OptionMessage();
@@ -70,11 +81,9 @@ namespace Api.BotControllers.Dialog
 
             var users = await _reportService.GetUsersAsync(startDateTime, now);
 
-            var userList = users.Take(250).Select(user => new KeyboardButton($"{user.Name}")).ToList(); ;
-
+            var userList = users.Take(250).DistinctBy(u=>u.Name).Select(user => new KeyboardButton($"{user.Name}")).ToList(); 
 
             var menu = MenuGenerator.ReplyKeyboard(2, userList, true, "Главное меню");
-
 
             options.MenuReplyKeyboardMarkup = menu;
 
@@ -84,45 +93,43 @@ namespace Api.BotControllers.Dialog
 
         public async Task FindUserByName(ITelegramBotClient client, Update update)
         {
-            
             // поиск по фамилии сотрудника в базе данных" 
             var userName = update.Message!.Text;
-            //_logger.LogError($"Find user {userName}");
             _logger.LogInformation($"{update.GetInfoUser()}| Tracking по фамилии: {userName}");
-            //Stopwatch stopwatch = new Stopwatch();
-            //засекаем время начала операции
-            //stopwatch.Start();
 
             var users = await _userManager.GetUserByNameAsync(userName);
 
-            //foreach (var usr in users)
-            //{
-            //    Console.WriteLine(usr.FullName);
-            //}
 
+            if (users.Count > 1 )
+            {
+                var userList = users.Take(250).Select(user => new KeyboardButton($"{user.FullName}")).ToList();
+
+                var menu = MenuGenerator.ReplyKeyboard(1, userList, true, "Главное меню");
+                var options = new OptionMessage();
+
+                options.MenuReplyKeyboardMarkup = menu;
+
+                await Helpers.Message.Send(client, update, "Выберите сотрудника из списка или уточните запрос", options);
+                return;
+            }
             
-
-            var dictionary = users.ToDictionary(s => s.Key, e => e.FullName);
             var user = users.LastOrDefault();
 
             if (user == null)
             {
                 _logger.LogWarning($"User {userName} не найден");
-                await PRTelegramBot.Helpers.Message.Send(client, update.GetChatId(), "не найдено");
+                await PRTelegramBot.Helpers.Message.Send(client, update.GetChatId(), "По вашему запросу не кто не найден!");
                 return;
             }
-            //var workingDaysList = user.GetWorkingDaysList();
+
             // передаем id пользователя и нужный месяц
             var workingDays = _reportService.GetWorkingDaysByUserId(user.Id, DateTime.Today);
 
-            //var workDateTimes = workingDaysList.Where(e => e.Month == DateTime.Today.Month).ToList();
-            //var workDateTimes = workingDays.Where(e => e.Month == DateTime.Today.Month).ToList();
-
-            //stopwatch.Start();
             //Получаем текущий обработчик
             var handler = update.GetStepHandler<StepTelegram>();
             handler!.GetCache<TrackingCache>().UserId = user.Id;
-            handler!.GetCache<TrackingCache>().FullName = user.FullName;
+            //handler!.GetCache<TrackingCache>().FullName = user.FullName;
+
             // если сотрудника найден и он единственный по фамилии, то предлагаем выбрать дату 
 
             //var calendarMarkup = Markup.Calendar(DateTime.Today, dtfi);
@@ -132,14 +139,13 @@ namespace Api.BotControllers.Dialog
             
             keyboardRows.Add(Row.Date(DateTime.Today, dtfi, 0));
             keyboardRows.Add(Row.DayOfWeek(dtfi, 0));
-            //var testRows = Row.Month(DateTime.Today, dtfi, 0);
-            var testRows = TestRow.Month(DateTime.Today, dtfi, workingDays, 0);
+            var testRows = TestRow.Month(DateTime.Today, dtfi, workingDays, user.Id, 0);
             
             keyboardRows.AddRange(testRows);
-            keyboardRows.Add(Row.Controls(DateTime.Today, 0));
+  
+            keyboardRows.Add(TestRow.Controls(DateTime.Today,user.Id, 0));
 
 
-            //var lastUseKey = await _reportService.GetLastUseKey(user.Id);
 
             var option = new OptionMessage();
             option.MenuInlineKeyboardMarkup = new InlineKeyboardMarkup(keyboardRows);
@@ -163,7 +169,7 @@ namespace Api.BotControllers.Dialog
         /// <summary>
         /// Выбор года или месяца
         /// </summary>
-        [InlineCallbackHandler<THeader>(THeader.YearMonthPicker)]
+        [InlineCallbackHandler<PRTelegramBotCommand>(PRTelegramBotCommand.YearMonthPicker)]
         public static async Task PickYearMonth(ITelegramBotClient botClient, Update update)
         {
             try
@@ -186,7 +192,7 @@ namespace Api.BotControllers.Dialog
         /// <summary>
         /// Выбор месяца
         /// </summary>
-        [InlineCallbackHandler<THeader>(THeader.PickMonth)]
+        [InlineCallbackHandler<PRTelegramBotCommand>(PRTelegramBotCommand.PickMonth)]
         public static async Task PickMonth(ITelegramBotClient botClient, Update update)
         {
             try
@@ -213,7 +219,7 @@ namespace Api.BotControllers.Dialog
         /// <summary>
         /// Выбор года
         /// </summary>
-        [InlineCallbackHandler<THeader>(THeader.PickYear)]
+        [InlineCallbackHandler<PRTelegramBotCommand>(PRTelegramBotCommand.PickYear)]
         public static async Task PickYear(ITelegramBotClient botClient, Update update)
         {
             try
@@ -224,7 +230,7 @@ namespace Api.BotControllers.Dialog
                     var monthYearMarkup = Markup.PickYear(command.Data.Date, dtfi, command.Data.LastCommand);
                     var option = new OptionMessage();
                     option.MenuInlineKeyboardMarkup = monthYearMarkup;
-                    await Helpers.Message.EditInline(botClient, update.GetChatId(), update.CallbackQuery.Message.MessageId, option);
+                    await Helpers.Message.EditInline(botClient, update.GetChatId(), update.GetMessageId(), option);
                 }
             }
             catch (Exception ex)
@@ -236,12 +242,12 @@ namespace Api.BotControllers.Dialog
         // <summary>
         /// Перелистывание месяца
         /// </summary>
-        [InlineCallbackHandler<THeader>(THeader.ChangeTo)]
+        [InlineCallbackHandler<PRTelegramBotCommand>(PRTelegramBotCommand.ChangeTo)]
         public  async Task ChangeToHandler(ITelegramBotClient botClient, Update update)
         {
             try
             {
-                var command = InlineCallback<CalendarTCommand>.GetCommandByCallbackOrNull(update.CallbackQuery.Data);
+                var command = InlineCallback<CustomCalendarCommand>.GetCommandByCallbackOrNull(update.CallbackQuery.Data);
                 if (command != null)
                 {
                     //var calendarMarkup = Markup.Calendar(command.Data.Date, dtfi, command.Data.LastCommand);
@@ -257,38 +263,37 @@ namespace Api.BotControllers.Dialog
                     }
                     var cache = handler!.GetCache<TrackingCache>();
 
-                    if (cache.UserId == 0)
+                    //if (cache.UserId == 0)
+                    //{
+                    //    await Tracking(botClient, update);
+                    //    return;
+                    //}
+                    if (command.Data.UserId == 0)
                     {
                         await Tracking(botClient, update);
                         return;
                     }
 
-                    //var user = await _userManager.GetUserByNameAsync(cache.FullName);
-                    var user = await _userManager.GetUserByIdAsync(cache.UserId);
-
-                    //var workingDaysList = user.GetWorkingDaysList();
-                    //var workDateTimes = workingDaysList.Where(e => e.Date.ToString("Y") == command.Data.Date.ToString("Y")).ToList();
-
+                    var user = await _userManager.GetUserByIdAsync(command.Data.UserId);
 
                     var workingDays = _reportService.GetWorkingDaysByUserId(user.Id, command.Data.Date);
 
-                    //var workDateTimes = workingDaysList.Where(e => e.Month == DateTime.Today.Month).ToList();
-                    var workDateTimes = workingDays.Where(e => e.Date.ToString("Y") == command.Data.Date.ToString("Y")).ToList();
+                    //var workDateTimes = workingDays.Where(e => e.Date.ToString("Y") == command.Data.Date.ToString("Y")).ToList();
 
 
-                    var keyboardRows = new List<IEnumerable<InlineKeyboardButton>>();
-                    keyboardRows.Add(Row.Date(command.Data.Date, dtfi, 0));
-                    keyboardRows.Add(Row.DayOfWeek(dtfi, 0));
-                    //var testRows = Row.Month(DateTime.Today, dtfi, 0);
-                    var testRows = TestRow.Month(command.Data.Date, dtfi, workDateTimes, 0);
+                    var calendarRows = new List<IEnumerable<InlineKeyboardButton>>();
+                    calendarRows.Add(Row.Date(command.Data.Date, dtfi, 0));
+                    calendarRows.Add(Row.DayOfWeek(dtfi, 0));
+                    //var rows = TestRow.Month(command.Data.Date, dtfi, workDateTimes,command.Data.UserId, 0);
+                    var rows = TestRow.Month(command.Data.Date, dtfi, workingDays, command.Data.UserId, 0);
 
-                    keyboardRows.AddRange(testRows);
-                    keyboardRows.Add(Row.Controls(command.Data.Date, 0));
+                    calendarRows.AddRange(rows);
+                    // добавить кнопки смены месяца <, Обновить >
+                    calendarRows.Add(TestRow.Controls(command.Data.Date, command.Data.UserId, 0));
 
-                    // var t = MenuGenerator.GetInlineButton(new InlineCallback<CalendarTCommand>($"({1})", THeader.PickDate, new CalendarTCommand(new DateTime(command.Data.Date.Year, command.Data.Date.Month, 1), 0)));
-                    option.MenuInlineKeyboardMarkup = new InlineKeyboardMarkup(keyboardRows);
+                    option.MenuInlineKeyboardMarkup = new InlineKeyboardMarkup(calendarRows);
                     handler!.GetCache<TrackingCache>().Options = option;
-                    //option.MenuInlineKeyboardMarkup = t;
+
                     await Helpers.Message.EditInline(botClient, update.GetChatId(), update.GetMessageId(), option);
                 }
             }
@@ -302,13 +307,15 @@ namespace Api.BotControllers.Dialog
         /// <summary>
         /// Обработка выбранной даты 🔟
         /// </summary>
-        [InlineCallbackHandler<THeader>(THeader.PickDate)]
+        [InlineCallbackHandler<PRTelegramBotCommand>(PRTelegramBotCommand.PickDate)]
         public async Task PickDate(ITelegramBotClient botClient, Update update)
         {
             var sb = new StringBuilder();
             try
             {
-                var command = InlineCallback<CalendarTCommand>.GetCommandByCallbackOrNull(update.CallbackQuery.Data);
+                //var command = InlineCallback<CalendarTCommand>.GetCommandByCallbackOrNull(update.CallbackQuery.Data);
+                var command = InlineCallback<CustomCalendarCommand>.GetCommandByCallbackOrNull(update.CallbackQuery.Data);
+
                 if (command != null)
                 {
                     var calendarMarkup = Markup.Calendar(command.Data.Date, dtfi, command.Data.LastCommand);
@@ -317,12 +324,16 @@ namespace Api.BotControllers.Dialog
                     var option = new OptionMessage();
                     
 
-                    var res = Row.Month(DateTime.Now, dtfi);
+                    //var res = Row.Month(DateTime.Now, dtfi);
                     option.MenuInlineKeyboardMarkup = calendarMarkup;
 
-                    var type = command.Data.GetLastCommandEnum<CustomTHeader>();
                     var data = command.Data.Date;
+                    //var eventsTest = await _reportService.TrackingByUserIdAndDateAsync(command.Data.UserId, data);
                     var handler = update.GetStepHandler<StepTelegram>();
+                    //update.GetCacheData<TrackingCache>();
+
+                    
+
                     if (handler == null)
                     {
                         await Tracking(botClient, update);
@@ -330,30 +341,59 @@ namespace Api.BotControllers.Dialog
                     }
 
                     var cache = handler!.GetCache<TrackingCache>();
-                    if (cache.UserId == 0)
-                    {
-                        await Tracking(botClient, update);
-                        return;
-                    }
+
+                    #region Потом можно удалить
+                    var workingDays = _reportService.GetWorkingDaysByUserId(command.Data.UserId, command.Data.Date);
+
+                    //var workDateTimes = workingDays.Where(e => e.Date.ToString("Y") == command.Data.Date.ToString("Y")).ToList();
+
+
+                    var calendarRows = new List<IEnumerable<InlineKeyboardButton>>();
+                    calendarRows.Add(Row.Date(command.Data.Date, dtfi, 0));
+                    calendarRows.Add(Row.DayOfWeek(dtfi, 0));
+                    //var rows = TestRow.Month(command.Data.Date, dtfi, workDateTimes,command.Data.UserId, 0);
+                    var rows = TestRow.Month(command.Data.Date, dtfi, workingDays, command.Data.UserId, 0);
+
+                    calendarRows.AddRange(rows);
+                    // добавить кнопки смены месяца <, Обновить >
+                    calendarRows.Add(TestRow.Controls(command.Data.Date, command.Data.UserId, 0));
+
+                    option.MenuInlineKeyboardMarkup = new InlineKeyboardMarkup(calendarRows);
+                    handler!.GetCache<TrackingCache>().Options = option;
+
+
+                    #endregion
+                    
+
+                    //if (cache.UserId == 0)
+                    //{
+                    //    await Tracking(botClient, update);
+                    //    return;
+                    //}
 
                     //Обработка данных даты;
-                    var events = await _reportService.TrackingByUserIdAndDateAsync(cache.UserId, data);
-                    //sb = new StringBuilder();
-                    sb.Append($"<u><b>Отчет за {command.Data.Date.ToString("d")}</b></u>\n");
-                    sb.Append($"<b>{cache.FullName}</b>\n");
+                    //var events = await _reportService.TrackingByUserIdAndDateAsync(cache.UserId, data);
+                    var events = await _reportService.TrackingByUserIdAndDateAsync(command.Data.UserId, data);
+                    var fullName = events[0].User.FullName;
 
-                    var t1 = sb.AppendJoin("\n", events.OrderBy(e => e.DateTime)
-                        .Select(e => $"[{e.DateTime:t}] {e.Reader.Name}"));
+                    sb.Append($"<u><b>Отчет за {command.Data.Date.ToString("d")}</b></u>\n");
+                    //sb.Append($"<b>{cache.FullName}</b>\n");
+                    sb.Append($"<b>{fullName}</b>\n");
+
+                    //var t1 = sb.AppendJoin("\n", events.OrderBy(e => e.DateTime)
+                    //    .Select(e => $"[{e.DateTime:t}] {e.Reader.Name}"));
 
                     //var t = sb.ToString();
                     //Console.WriteLine(t.Length);
 #if DEBUG
                     //botClient.InvokeCommonLog(t);
 #endif
+                    //await Helpers.Message.Edit(botClient, update, sb.ToString(), cache.Options);
+                    await Helpers.Message.Edit(botClient, update, sb.ToString(), option);
 
-                    await Helpers.Message.Edit(botClient, update.GetChatId(), update.GetMessageId(), sb.ToString(), cache.Options);
+                    //await Helpers.Message.Edit(botClient, update.GetChatId(), update.GetMessageId(), sb.ToString(), cache.Options);
+                    //await Helpers.Message.Edit(botClient, update.GetChatId(), update.GetMessageId(), sb.ToString());
                     botClient.InvokeCommonLog($"{update.GetInfoUser()}| Tracking по фамилии: {cache.FullName}, {command.Data.Date:d}");
-                    //_logger.LogInformation($"{update.GetInfoUser()}| Tracking по фамилии: {cache.FullName}, {command.Data.Date:d}");
 
                 }
             }
@@ -363,11 +403,7 @@ namespace Api.BotControllers.Dialog
             }
             finally
             {
-                //long totalMemory = GC.GetTotalMemory(false);
 
-                //GC.Collect();
-                //GC.WaitForPendingFinalizers();
-                //sb.Clear();
             }
         }
 

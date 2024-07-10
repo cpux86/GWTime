@@ -1,6 +1,6 @@
 ﻿
 using Domain;
-using PRTelegramBot.Interface;
+using PRTelegramBot.Interfaces;
 using PRTelegramBot.Models;
 
 namespace Api.BotControllers.Dialog
@@ -10,7 +10,7 @@ namespace Api.BotControllers.Dialog
     {
         public string FullName { get; set; }
 
-        public List<User> Users { get; set; }
+        //public List<User> Users { get; set; }
         public int UserId { get; set; }
         public OptionMessage Options { get; set; } = new OptionMessage();
         public DateTime DateTime { get; set; }

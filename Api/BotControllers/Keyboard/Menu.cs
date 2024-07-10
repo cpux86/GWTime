@@ -35,12 +35,62 @@ namespace Api.BotControllers.Keyboard
         }
 
 
-        private static List<KeyboardButton> SelectUsersMenu => new()
+        //private static List<KeyboardButton> SettingsKeyboard => new()
+        //{
+        //    new KeyboardButton("Мои люди"),
+        //    //new KeyboardButton("Другой"),
+
+        //    //new KeyboardButton("По сотруднику"),
+        //    //new KeyboardButton("По группе"),
+        //    //new KeyboardButton("По всем"),
+        //};
+
+
+        public static OptionMessage SettingsKeyboard()
         {
-            new KeyboardButton("По сотруднику"),
-            new KeyboardButton("По группе"),
-            new KeyboardButton("По всем"),
-        };
+            var option = new OptionMessage();
+
+            var menu = new List<KeyboardButton>()
+            {
+                new KeyboardButton("Мои люди"),
+            };
+
+            option.MenuReplyKeyboardMarkup = MenuGenerator.ReplyKeyboard(2, menu, true, "Главное меню");
+            return option;
+        }
+        // Клавиатура мои люди
+        public static OptionMessage MyPeopleKeyboard()
+        {
+            var option = new OptionMessage();
+
+            //var menu = new List<KeyboardButton>()
+            //{
+            //    new KeyboardButton("Показать список"),
+            //    new KeyboardButton("Добавить"),
+            //    new KeyboardButton("Удалить"),
+
+            //};
+
+            InlineKeyboardMarkup menu = new(new[]
+            {
+                new []
+                {
+                    InlineKeyboardButton.WithCallbackData(text: "Редактировать", callbackData: "21"),
+                },
+                //new []
+                //{
+                //    InlineKeyboardButton.WithCallbackData(text: "↔", callbackData: "21"),
+                //},
+            });
+
+            option.MenuInlineKeyboardMarkup = menu;
+
+            //option.MenuReplyKeyboardMarkup = MenuGenerator.ReplyKeyboard(1, menu, true, "Назад");
+            
+            return option;
+        }
+
+
 
         private static List<KeyboardButton> PeriodMenu => new()
         {

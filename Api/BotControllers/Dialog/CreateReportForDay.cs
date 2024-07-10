@@ -2,7 +2,6 @@
 using Application.Interfaces;
 using PRTelegramBot.Attributes;
 using PRTelegramBot.Extensions;
-using PRTelegramBot.Interface;
 using PRTelegramBot.Models;
 using PRTelegramBot.Models.InlineButtons;
 using PRTelegramBot.Utils;
@@ -27,83 +26,85 @@ using Application.DTOs;
 
 
 namespace Api.BotControllers.Dialog;
-
+[BotHandler]
 public class CreateReportForDay
 {
     private readonly IReportService _report;
     private readonly IUserManager _userManager;
     private readonly ILogger _logger;
+    private readonly GWT.Client _client;
     public CreateReportForDay(IReportService report, IUserManager userManager, ILogger<CreateReportForDay> logger)
     {
         _report = report;
         _userManager = userManager;
         _logger = logger;
+        _client = new GWT.Client("http://localhost:55222", new HttpClient());
     }
 
     //[ReplyMenuHandler("/start")]
-    [ReplyMenuHandler("Хронос")]
-    public async Task Start(ITelegramBotClient client, Update update)
-    {
-        //var report = await _report.GetReportByReaders(DateTime.Parse("2024-01-01 06:00:00.00"),
-        //    DateTime.Now, new List<int> { 141 }, new List<int>() { 142 });
-        //var userList = report.Workers.Where(e => e.WorkTimes.Count > 0).ToList();
-        //var groups= userList.GroupBy(e => e.Group.Name).Select(e => new Group() { Name = e.Key, Workers = e.ToList() }).ToList();
+    //[ReplyMenuHandler("Хронос")]
+    //public async Task Start(ITelegramBotClient client, Update update)
+    //{
+    //    //var report = await _report.GetReportByReaders(DateTime.Parse("2024-01-01 06:00:00.00"),
+    //    //    DateTime.Now, new List<int> { 141 }, new List<int>() { 142 });
+    //    //var userList = report.Workers.Where(e => e.WorkTimes.Count > 0).ToList();
+    //    //var groups= userList.GroupBy(e => e.Group.Name).Select(e => new Group() { Name = e.Key, Workers = e.ToList() }).ToList();
 
-        //foreach (var group in groups)
-        //{
-        //    var msg = new StringBuilder();
-        //    msg.Append($"<b>#⃣ {group.Name} #⃣</b>\n\r");
-        //    msg.AppendJoin("\n", group.Workers.Select(e => e.Name = $"🙎‍♂️ {e.Name} 👉 {e.TotalTime}"));
-        //    var sendMessage = await PRTelegramBot.Helpers.Message.Send(client, update, msg.ToString());
-        //}
-
-
-        //string msg1 = "Меню";
-        ////Создаем настройки сообщения
-        //var option = new OptionMessage();
-        ////Создаем список для меню
-        //var menuList = new List<KeyboardButton>();
-        //foreach (var t in test)
-        //{
-        //    //Добавляем кнопку с текстом
-        //    menuList.Add(new KeyboardButton(t.Name));
-        //}
+    //    //foreach (var group in groups)
+    //    //{
+    //    //    var msg = new StringBuilder();
+    //    //    msg.Append($"<b>#⃣ {group.Name} #⃣</b>\n\r");
+    //    //    msg.AppendJoin("\n", group.Workers.Select(e => e.Name = $"🙎‍♂️ {e.Name} 👉 {e.TotalTime}"));
+    //    //    var sendMessage = await PRTelegramBot.Helpers.Message.Send(client, update, msg.ToString());
+    //    //}
 
 
-        ////Генерируем reply меню
-        ////1 столбец, коллекция пунктов меню, вертикальное растягивание меню, пункт в самом низу по умолчанию
-        //var menu = MenuGenerator.ReplyKeyboard(2, menuList, true, "Главное меню");
-        ////Добавляем в настройки меню
-        //option.MenuReplyKeyboardMarkup = menu;
-        //await PRTelegramBot.Helpers.Message.Send(client, update, msg1, option);
+    //    //string msg1 = "Меню";
+    //    ////Создаем настройки сообщения
+    //    //var option = new OptionMessage();
+    //    ////Создаем список для меню
+    //    //var menuList = new List<KeyboardButton>();
+    //    //foreach (var t in test)
+    //    //{
+    //    //    //Добавляем кнопку с текстом
+    //    //    menuList.Add(new KeyboardButton(t.Name));
+    //    //}
 
 
+    //    ////Генерируем reply меню
+    //    ////1 столбец, коллекция пунктов меню, вертикальное растягивание меню, пункт в самом низу по умолчанию
+    //    //var menu = MenuGenerator.ReplyKeyboard(2, menuList, true, "Главное меню");
+    //    ////Добавляем в настройки меню
+    //    //option.MenuReplyKeyboardMarkup = menu;
+    //    //await PRTelegramBot.Helpers.Message.Send(client, update, msg1, option);
 
 
 
 
 
 
-        string msg = "Выберите устройство";
-        List<IInlineContent> menu = new List<IInlineContent>();
-
-        menu.Add(new InlineCallback("<b>Хронос</b>", CustomTHeader.Chronos));
-        menu.Add(new InlineCallback("Курилка № 1", CustomTHeader.Kurilka1));
-        menu.Add(new InlineCallback("Курилка № 2", CustomTHeader.Kurilka2));
-        menu.Add(new InlineCallback("Гальваника", CustomTHeader.Galvanika));
-
-        //Генерация меню в 1 столбец
-        var menuItems = MenuGenerator.InlineKeyboard(1, menu);
-
-        var options = new OptionMessage();
-        //options.ParseMode = ParseMode.Html;
-        options.MenuInlineKeyboardMarkup = menuItems;
 
 
-        ////Регистрация обработчика для последовательной обработки шагов и сохранение данных
-        ////update.RegisterStepHandler(new StepTelegram(StepOne, new StepCache()));
-        await PRTelegramBot.Helpers.Message.Send(client, update, msg, options);
-    }
+    //    string msg = "Выберите устройство";
+    //    List<IInlineContent> menu = new List<IInlineContent>();
+
+    //    menu.Add(new InlineCallback("<b>Хронос</b>", CustomTHeader.Chronos));
+    //    menu.Add(new InlineCallback("Курилка № 1", CustomTHeader.Kurilka1));
+    //    menu.Add(new InlineCallback("Курилка № 2", CustomTHeader.Kurilka2));
+    //    menu.Add(new InlineCallback("Гальваника", CustomTHeader.Galvanika));
+
+    //    //Генерация меню в 1 столбец
+    //    var menuItems = MenuGenerator.InlineKeyboard(1, menu);
+
+    //    var options = new OptionMessage();
+    //    //options.ParseMode = ParseMode.Html;
+    //    options.MenuInlineKeyboardMarkup = menuItems;
+
+
+    //    ////Регистрация обработчика для последовательной обработки шагов и сохранение данных
+    //    ////update.RegisterStepHandler(new StepTelegram(StepOne, new StepCache()));
+    //    await PRTelegramBot.Helpers.Message.Send(client, update, msg, options);
+    //}
 
 
     #region Users
@@ -187,7 +188,8 @@ public class CreateReportForDay
 
 
         await PRTelegramBot.Helpers.Message.Send(client, update, sb.ToString());
-        await PRTelegramBot.Helpers.Message.DeleteChat(client, update.Message.Chat.Id, update.Message.MessageId);
+        //await PRTelegramBot.Helpers.Message.DeleteChat(client, update.Message.Chat.Id, update.Message.MessageId);
+        await PRTelegramBot.Helpers.Message.DeleteMessage(client, update.Message.Chat.Id, update.Message.MessageId);
 
     }
     [SlashHandler("/g")]
@@ -201,14 +203,21 @@ public class CreateReportForDay
             var sb = new StringBuilder();
             sb.AppendJoin("\n", userList.Select(u => u.Name));
 
-            //await PRTelegramBot.Helpers.Message.DeleteChat(client, update.Message.Chat.Id, update.Message.Code - 1);
-            await PRTelegramBot.Helpers.Message.Send(client, update, sb.ToString());
+
+
+
+            var optionMessage = Menu.MyPeopleKeyboard();
+
+
+            await PRTelegramBot.Helpers.Message.Send(client, update, sb.ToString(), optionMessage);
+            //await PRTelegramBot.Helpers.Message.Send(client, update, sb.ToString());
         }
 
 
 
 
-        await PRTelegramBot.Helpers.Message.DeleteChat(client, update.Message.Chat.Id, update.Message.MessageId);
+        //await PRTelegramBot.Helpers.Message.DeleteChat(client, update.Message.Chat.Id, update.Message.MessageId);
+        await PRTelegramBot.Helpers.Message.DeleteMessage(client, update.Message.Chat.Id, update.Message.MessageId);
 
     }
 
@@ -219,12 +228,15 @@ public class CreateReportForDay
     [ReplyMenuHandler("Главное меню", "/start")]
     public async Task MainMenu(ITelegramBotClient client, Update update)
     {
+        //var c = new GWT.Client("http://localhost:55222", new HttpClient());
 
+        //var res = await _client.ReportAsync(DateTimeOffset.Now.AddDays(-10), DateTimeOffset.Now, new List<int> { 141 },
+        //    new List<int> { 142 });
         var msg = "Главное меню";
 
 
         await PRTelegramBot.Helpers.Message.Send(client, update, msg, Menu.MainMenuKeyboard());
-        await PRTelegramBot.Helpers.Message.DeleteChat(client, update.Message.Chat.Id, update.Message.MessageId);
+        //await PRTelegramBot.Helpers.Message.DeleteChat(client, update.Message.Chat.Id, update.Message.MessageId);
     }
 
     public static DateTimeFormatInfo dtfi = CultureInfo.GetCultureInfo("ru-RU", false).DateTimeFormat;
@@ -297,8 +309,8 @@ public class CreateReportForDay
     [ReplyMenuHandler("👷‍♂️Кто на работе", "/whoshere","/workerstoday")] //Workers Today - рабочие сегодня
     public async Task Whoshere(ITelegramBotClient client, Update update)
     {
-
         var workersToday = await _report.GetWorkersTodayAsync();
+        var nightShift = await _report.GetNightShiftAsync();
         if (workersToday.Count == 0)
         {
             await PRTelegramBot.Helpers.Message.Send(client, update, "Информация за указанный период отсутствует 🤷‍♂️");
@@ -306,8 +318,16 @@ public class CreateReportForDay
         }
 
         var msg = new StringBuilder();
-        var m = msg.AppendJoin("\n", workersToday.Select(e => $"👷‍♂️[{e.Group.Id}] {e.Name}"));
-        await PRTelegramBot.Helpers.Message.Send(client, update, m.ToString(),Menu.MainMenuKeyboard());
+        var m = msg.AppendJoin("\n", workersToday.Select(e => $"☀ [{e.Group.Id}] {e.Name}"));
+
+        if (nightShift.Count > 0)
+        {
+            m = m.Append($"\n").Append("\n");
+            m = m.AppendJoin("\n", nightShift.Select(e => $"🌒 [{e.Group.Id}] {e.Name}"));
+        }
+
+        //await PRTelegramBot.Helpers.Message.Send(client, update, m.ToString(),Menu.MainMenuKeyboard());
+        await PRTelegramBot.Helpers.Message.Send(client, update, m.ToString(), Menu.MyPeopleKeyboard());
     }
 
 
@@ -807,7 +827,6 @@ public class CreateReportForDay
         var file = InputFile.FromStream(ms, $"отчет c {startDayTime:d} - {endDayTime:d}.xlsx");
         var send = await client.SendDocumentAsync(update.GetChatId(), file);
         workbook.Dispose();
-        //await file.Content.DisposeAsync();
     }
 
     public async Task<Workbook> GenerateReportFileStreamAsync(List<Application.DTOs.Worker> usrList)
@@ -836,6 +855,7 @@ public class CreateReportForDay
             quickReportTable.Columns.Add("Ф.И.О.", typeof(string));
             quickReportTable.Columns.Add("Итого", typeof(string));
             quickReportTable.Columns.Add("Участок", typeof(string));
+            quickReportTable.Columns.Add("Договор", typeof(string));
 
             foreach (var group in groups.OrderBy(e => e.Name).OrderByDescending(e => e.Workers.Count))
             {
@@ -856,7 +876,7 @@ public class CreateReportForDay
                     quickReportRow[0] = user.FullName;
                     quickReportRow[1] = user.TotalTime;
                     quickReportRow[2] = user.Group!.Name;
-
+                    quickReportRow[3] = user.ContractInfo;
                     quickReportTable.Rows.Add(quickReportRow);
 
                     foreach (var wt in user.WorkTimes)
@@ -885,8 +905,13 @@ public class CreateReportForDay
                 detailsReportWorksheet.InsertDataTable(detailsTable, true, 1, 1, true);
                 quickReportWorksheet.AllocatedRange.AutoFitColumns();
 
+                //var filters = quickReportWorksheet.AutoFilters;
+                //filters.Range = quickReportWorksheet.Range[1, 3, quickReportWorksheet.LastRow, 3];
+
+                //filters.Filter();
+
                 var filters = quickReportWorksheet.AutoFilters;
-                filters.Range = quickReportWorksheet.Range[1, 3, quickReportWorksheet.LastRow, 3];
+                filters.Range = quickReportWorksheet.Range[1, 3, quickReportWorksheet.LastRow, 4];
 
                 filters.Filter();
 
@@ -896,8 +921,11 @@ public class CreateReportForDay
 
             quickReportWorksheet.Range[1, 2, quickReportWorksheet.LastRow, 2].Style.HorizontalAlignment =
                 HorizontalAlignType.Center;
+            quickReportWorksheet.Range[1, 4, quickReportWorksheet.LastRow, 4].Style.HorizontalAlignment =
+                HorizontalAlignType.Center;
             quickReportWorksheet.Range[1, 2, quickReportWorksheet.LastRow, 2].Style.Font.IsBold = true;
-            quickReportWorksheet.Range[1, 1, 1, 3].Style.Font.IsBold = true;
+            // заголовок таблицы
+            quickReportWorksheet.Range[1, 1, 1, 4].Style.Font.IsBold = true;
             return workbook;
         });
     }

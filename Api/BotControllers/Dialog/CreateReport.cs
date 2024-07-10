@@ -10,6 +10,7 @@ using PRTelegramBot.Extensions;
 
 namespace Api.BotControllers.Dialog
 {
+    [BotHandler]
     public class CreateReport
     {
         private const string SelectPeriodMsg = "Выберите период";
@@ -73,7 +74,8 @@ namespace Api.BotControllers.Dialog
             //handler.RegisterNextStep(SelectReader, DateTime.Now.AddMinutes(5));
 
 
-            await PRTelegramBot.Helpers.Message.DeleteChat(client, update.Message.Chat.Id, update.Message.MessageId);
+            //await PRTelegramBot.Helpers.Message.DeleteChat(client, update.Message.Chat.Id, update.Message.MessageId);
+            await PRTelegramBot.Helpers.Message.DeleteMessage(client, update.Message.Chat.Id, update.Message.MessageId);
 
 
 

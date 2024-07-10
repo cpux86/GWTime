@@ -16,6 +16,8 @@ using Telegram.Bot;
 using Telegram.Bot.Types;
 using Helpers = PRTelegramBot.Helpers;
 using Update = Telegram.Bot.Types.Update;
+using GWT;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,7 +42,6 @@ builder.Logging.AddNLog();
 //    opt.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning);
 //});
 
-//builder.Services.AddControllers();
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
@@ -53,7 +54,7 @@ builder.Services.AddGrpc();
 
 var app = builder.Build();
 
-app.UseResponseCompression();
+//app.UseResponseCompression();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -75,32 +76,49 @@ app.MapControllers();
 
 
 
-
 //Создание и запуск бота
-var botInstance = new PRBot(new TelegramConfig
-    {
-        //Token = "6679926909:AAFQ8OSxR3GtYFRXepqfrX7dvkwkczVAgoI", // Production
-        //Token = "6581396259:AAHak1OPEZiUJ5R0bSJDb3GZQe9MnSuuznc", // Demo
-        Token = token,
-        ClearUpdatesOnStart = true,
-        BotId = 0
-    },
-
-    app.Services.GetService<IServiceProvider>()
-);
-
-await botInstance.Start();
-botInstance.Handler.Router.OnMissingCommand += RouterOnMissingCommand;
-//botInstance.Handler.OnPreUpdate += Handler_OnPreUpdate;
-
-
-//static async Task<PRTelegramBot.Models.Enums.ResultUpdate> Handler_OnPreUpdate(ITelegramBotClient arg1, Update update)
+//var botInstance = new PRBot(new TelegramConfig
 //{
-//    Console.WriteLine();
-//}
+//    //Token = "6679926909:AAFQ8OSxR3GtYFRXepqfrX7dvkwkczVAgoI", // Production
+//    //Token = "6581396259:AAHak1OPEZiUJ5R0bSJDb3GZQe9MnSuuznc", // Demo
+//    Token = token,
+//    ClearUpdatesOnStart = true,
+//    BotId = 0
+//},
 
-botInstance.OnLogCommon += BotInstanceOnLogCommon;
-await botInstance.botClient.SetMyCommandsAsync(new List<BotCommand>()
+//    app.Services.GetService<IServiceProvider>()
+//);
+
+var serviceProvider = app.Services.GetService<IServiceProvider>();
+
+
+var telegram = new PRBotBuilder(token)
+    .SetBotId(0)
+    //.AddAdmin(1111111)
+    .SetClearUpdatesOnStart(true)
+    .SetServiceProvider(serviceProvider)
+    //.AddUserWhiteList(5545443995)
+    .Build();
+
+telegram.Events.OnMissingCommand += EventsOnMissingCommand;
+telegram.Events.OnCommonLog += EventsOnCommonLog;
+
+await telegram.Start();
+
+Task EventsOnCommonLog(PRTelegramBot.Models.EventsArgs.CommonLogEventArgs arg)
+{
+    logger.LogInformation(arg.Message);
+    return Task.CompletedTask;
+}
+
+static async  Task EventsOnMissingCommand(PRTelegramBot.Models.EventsArgs.BotEventArgs arg)
+{
+    arg.Update.ClearStepUserHandler();
+    await Helpers.Message.Send(arg.BotClient, arg.Update.GetChatId(), "Что-то пошло не так... /start");
+
+}
+
+await telegram.botClient.SetMyCommandsAsync(new List<BotCommand>()
 {
     new BotCommand()
     {
@@ -118,29 +136,6 @@ await botInstance.botClient.SetMyCommandsAsync(new List<BotCommand>()
         Description = "Главное меню"
     }
 });
-
- void BotInstanceOnLogCommon(string msg, Enum typeEvent, ConsoleColor color)
-{
-    //Console.ForegroundColor = color;
-    //Console.WriteLine(msg);
-
-    if (typeEvent == null)
-    {
-       logger.LogInformation(msg);
-    }
-    
-#if DEBUG
-    Console.WriteLine("Debug version");
-#endif
-
-}
-
-static async Task RouterOnMissingCommand(ITelegramBotClient client, Update update)
-{
-    update.ClearStepUserHandler();
-    await Helpers.Message.Send(client, update.GetChatId(), "не верный запрос /start");
-
-}
 
 app.Run();
 

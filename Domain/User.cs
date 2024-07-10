@@ -25,12 +25,15 @@ public class User : BaseEntity
     /// </summary>
     public Group? Group { get; set; }
 
+    /// <summary>
+    /// RFID ключ
+    /// </summary>
     public string? Key { get; set; } = string.Empty;
 
-    [Precision(2)]
     /// <summary>
     /// Дата последнего использования ключа
     /// </summary>
+    [Precision(2)]
     public DateTime? LastUsedKeyDate { get; set; } = DateTime.MinValue;
     /// <summary>
     /// Место последнего прохода
@@ -38,15 +41,4 @@ public class User : BaseEntity
     public string? LastUsedReaderName { get; set; }
 
     public string? LastEventMessage { get; set; }
-
-    /// <summary>
-    /// Возвращает список рабочих дней  
-    /// </summary>
-    /// <returns></returns>
-    public List<DateTime> GetWorkingDaysList()
-    {
-        var dateTimes = this.Events!.GroupBy(e=>e.DateTime.Date).Select(e=>e.Key).ToList();
-        return dateTimes;
-    }
-
 }

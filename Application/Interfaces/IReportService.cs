@@ -26,6 +26,7 @@ namespace Application.Interfaces
         public List<DateTime> GetWorkingDaysByUserId(int userId, DateTime startDate);
 
         public Task<List<User>> GetWorkersTodayAsync();
+        public Task<List<User>> GetNightShiftAsync();
 
 
     }

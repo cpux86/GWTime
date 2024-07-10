@@ -33,7 +33,8 @@ namespace Persistence
                 //var t = configuration.GetSection("ConnectionStrings:GWT0905");
                 var connectionString = configuration.GetConnectionString("GateLogger");
 
-                options.UseSqlServer(connectionString);
+                //options.UseSqlServer(connectionString);
+                options.UseSqlServer(connectionString, builder => builder.UseCompatibilityLevel(120));
 
                 //options.UseSqlite(@"DataSource=C:\CSharp\GWTime\DB\Event.db");
                 //options.UseSqlServer(System.Environment.GetEnvironmentVariable("GWT0905"));

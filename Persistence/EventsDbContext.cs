@@ -37,16 +37,16 @@ namespace Persistence
         /// <returns></returns>
         public List<DateTime> GetWorkingDaysByUserId(int userId, DateTime startDate, DateTime endDate)
         {
-
             return Database.SqlQueryRaw<DateTime>($"SELECT DISTINCT CONVERT(date, dateTime) AS dt FROM Events" +
                                                   $" WHERE UserId = @userId and dateTime > @startDt and dateTime < @endDt" +
                                                   $" ORDER BY dt ASC", new SqlParameter("userId", userId), new SqlParameter("startDt", startDate), new SqlParameter("endDt", endDate))
                 .ToList();
-
-            //return Database.SqlQueryRaw<DateTime>($"SELECT DISTINCT CONVERT(date, dateTime) AS dt FROM Events WHERE UserId = @userId", new SqlParameter("userId", userId))
-            //    //.Where(dt=>dt.Date < DateTime.Now)
-            //    .ToList();
-
+            //var sqlQuery = $"SELECT DISTINCT CONVERT(date, dateTime) AS dt FROM Events"
+            //          + $" WHERE UserId = @userId and dateTime > @startDt and dateTime < @endDt"
+            //          + $" ORDER BY dt ASC";
+            //var list = new List<DateTime>();
+            //foreach (var time in Database.SqlQueryRaw<DateTime>(sqlQuery, new SqlParameter("userId", userId), new SqlParameter("startDt", startDate), new SqlParameter("endDt", endDate))) list.Add(time);
+            //return list;
         }
     }
 }

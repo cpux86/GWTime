@@ -59,10 +59,9 @@ namespace Application.Services
         {
             return await _context.Users
                 .AsNoTracking()
-                //.Include(e => e.Events)
                 .Include(u => u.Group)
-                .Where(u => u.Id == userId)
-                .FirstOrDefaultAsync(CancellationToken.None) ?? throw new Exception("пользователь не найден");
+                //.Where(u => u.Id == userId)
+                .FirstOrDefaultAsync(u=>u.Id == userId, CancellationToken.None) ?? throw new Exception("пользователь не найден");
             //return user;
         }
 

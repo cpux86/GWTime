@@ -1,6 +1,6 @@
 ﻿namespace Api.BotControllers.Keyboard
 {
-    public class IReportKeyboard
+    public class Settings
     {
     }
 }

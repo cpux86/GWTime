@@ -15,10 +15,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GWTimeApp", "GWTimeApp", "{
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GateLogger", "GateLogger\GateLogger.csproj", "{92AEC562-5A71-42FD-A462-8CCAF25BFE80}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{08490103-2C62-441E-B3AF-F4EB0748016F}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkTime.Tests", "WorkTime.Tests\WorkTime.Tests.csproj", "{A6E72223-279D-48B5-A77E-B2FE8508578C}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,10 +41,6 @@ Global
 		{92AEC562-5A71-42FD-A462-8CCAF25BFE80}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{92AEC562-5A71-42FD-A462-8CCAF25BFE80}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{92AEC562-5A71-42FD-A462-8CCAF25BFE80}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A6E72223-279D-48B5-A77E-B2FE8508578C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A6E72223-279D-48B5-A77E-B2FE8508578C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A6E72223-279D-48B5-A77E-B2FE8508578C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A6E72223-279D-48B5-A77E-B2FE8508578C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -59,7 +51,6 @@ Global
 		{CC5BD23A-7846-4706-BD27-AF8D5B5D1794} = {9C7B30D9-6DEE-4D9D-B2DE-FFE9C35685A9}
 		{5FB61559-E758-4FC7-8C92-7AA674174F86} = {9C7B30D9-6DEE-4D9D-B2DE-FFE9C35685A9}
 		{92AEC562-5A71-42FD-A462-8CCAF25BFE80} = {9C7B30D9-6DEE-4D9D-B2DE-FFE9C35685A9}
-		{A6E72223-279D-48B5-A77E-B2FE8508578C} = {08490103-2C62-441E-B3AF-F4EB0748016F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AE7E57D7-7378-484F-81C0-B798C73AA0EC}
