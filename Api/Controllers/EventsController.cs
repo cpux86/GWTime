@@ -72,5 +72,14 @@ namespace Api.Controllers
             var bot = new TelegramBotClient("6581396259:AAHak1OPEZiUJ5R0bSJDb3GZQe9MnSuuznc");
             await bot.SendTextMessageAsync("6310947780", "Как дела?");
         }
+
+        [HttpGet]
+        [Route("wd")]
+        public async Task<List<DateTime>>GetWorkingDays(int uid, DateOnly date)
+        {
+            var result = await _reportService.GetWorkingDaysByUserId(uid, date.ToDateTime(TimeOnly.MinValue));
+            return result;
+        }
+
     }
 }

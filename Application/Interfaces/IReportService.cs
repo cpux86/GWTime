@@ -23,7 +23,8 @@ namespace Application.Interfaces
         public Task<List<Event>> TrackingByUserIdAndDateAsync(int userId, DateTime dateTime);
         public Task<Event> GetLastUseKey(int userId);
 
-        public List<DateTime> GetWorkingDaysByUserId(int userId, DateTime startDate);
+        public Task<List<DateTime>> GetWorkingDaysByUserId(int userId, DateTime startDate);
+        //public Task<List<DateOnly>> GetWorkingDaysByUserId(int userId, DateTime startDate);
 
         public Task<List<User>> GetWorkersTodayAsync();
         public Task<List<User>> GetNightShiftAsync();

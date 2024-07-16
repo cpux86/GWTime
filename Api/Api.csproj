@@ -7,6 +7,7 @@
 	  <LangVersion>11</LangVersion>
     <UserSecretsId>ef081a96-b455-4279-bea0-d5ec9634824c</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <PublishAot>False</PublishAot>
   </PropertyGroup>
 
   <ItemGroup>
@@ -50,10 +51,10 @@
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.20.1" />
     <PackageReference Include="NLog.Extensions.Logging" Version="5.3.11" />
-    <PackageReference Include="PRTelegramBot" Version="0.6.0" />
+    <PackageReference Include="PRTelegramBot" Version="0.6.0.0" />
+    <PackageReference Include="Telegram.Bot" Version="19.0.0" />
     <PackageReference Include="RabbitMQ.Client" Version="6.8.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
-    <PackageReference Include="Telegram.Bot" Version="19.0.0" />
     <None Update="nlog.config" CopyToOutputDirectory="Always" />
   </ItemGroup>
 

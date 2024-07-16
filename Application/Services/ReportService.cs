@@ -239,14 +239,13 @@ namespace Application.Services
         /// </summary>
         /// <param name="userId"></param>
         /// <returns></returns>
-        public List<DateTime> GetWorkingDaysByUserId(int userId, DateTime date)
+        public async Task<List<DateTime>> GetWorkingDaysByUserId(int userId, DateTime date)
         {
             var startdt = new DateTime(date.Year, date.Month, 1);
 
             var daysInMonth = DateTime.DaysInMonth(date.Year, date.Month);
-
             var enddt = startdt.AddDays(daysInMonth);
-            return _dbContext.GetWorkingDaysByUserId(userId, startdt, enddt);
+            return await _dbContext.GetWorkingDaysByUserId(userId, startdt, enddt);
         }
 
 

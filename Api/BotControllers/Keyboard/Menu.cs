@@ -96,8 +96,6 @@ namespace Api.BotControllers.Keyboard
         {
             new KeyboardButton("Сегодня"),
             new KeyboardButton("Вчера"),
-            //new KeyboardButton("Текущая неделя"),
-            //new KeyboardButton("Предыдущая неделя"),
             new KeyboardButton("1-я пол. месяца"),
             new KeyboardButton("2-я пол. месяца"),
             new KeyboardButton("Текущий месяц"),

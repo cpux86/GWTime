@@ -21,6 +21,7 @@ namespace Application.Interfaces
         /// </summary>
         /// <param name="userId"></param>
         /// <returns></returns>
-        public List<DateTime> GetWorkingDaysByUserId(int userId, DateTime start, DateTime end);
+        public Task<List<DateTime>> GetWorkingDaysByUserId(int userId, DateTime start, DateTime end);
+        //public Task<List<DateOnly>> GetWorkingDaysByUserId(int userId, DateTime start, DateTime end);
     }
 }

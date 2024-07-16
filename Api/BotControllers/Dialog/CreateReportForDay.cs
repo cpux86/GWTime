@@ -803,7 +803,7 @@ public class CreateReportForDay
 
     private async Task SendReportDocumentAsync(ITelegramBotClient client, Update update, DateTime startDayTime, DateTime endDayTime)
     {
-        await PRTelegramBot.Helpers.Message.Send(client, update, "Обращение к базе данных");
+        //await PRTelegramBot.Helpers.Message.Send(client, update, "Обращение к базе данных");
         var inputReader = new List<int> { 141 };
         var outputReader = new List<int>() { 142 };
 

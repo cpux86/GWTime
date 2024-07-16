@@ -35,18 +35,24 @@ namespace Persistence
         /// </summary>
         /// <param name="userId"></param>
         /// <returns></returns>
-        public List<DateTime> GetWorkingDaysByUserId(int userId, DateTime startDate, DateTime endDate)
+        public async Task<List<DateTime>> GetWorkingDaysByUserId(int userId, DateTime startDate, DateTime endDate)
         {
-            return Database.SqlQueryRaw<DateTime>($"SELECT DISTINCT CONVERT(date, dateTime) AS dt FROM Events" +
-                                                  $" WHERE UserId = @userId and dateTime > @startDt and dateTime < @endDt" +
-                                                  $" ORDER BY dt ASC", new SqlParameter("userId", userId), new SqlParameter("startDt", startDate), new SqlParameter("endDt", endDate))
-                .ToList();
-            //var sqlQuery = $"SELECT DISTINCT CONVERT(date, dateTime) AS dt FROM Events"
-            //          + $" WHERE UserId = @userId and dateTime > @startDt and dateTime < @endDt"
-            //          + $" ORDER BY dt ASC";
-            //var list = new List<DateTime>();
-            //foreach (var time in Database.SqlQueryRaw<DateTime>(sqlQuery, new SqlParameter("userId", userId), new SqlParameter("startDt", startDate), new SqlParameter("endDt", endDate))) list.Add(time);
-            //return list;
+
+
+            //var d = await Database.SqlQueryRaw<DateOnly>($"SELECT DISTINCT CONVERT(date, dateTime) AS dt FROM Events" +
+            //                                      $" WHERE UserId = @userId and dateTime > @startDt and dateTime < @endDt" +
+            //                                      $" ORDER BY dt ASC", new SqlParameter("userId", userId), new SqlParameter("startDt", startDate), new SqlParameter("endDt", endDate))
+            //    .ToListAsync(CancellationToken.None);
+
+            return await Database.SqlQueryRaw<DateTime>($"SELECT DISTINCT CONVERT(date, dateTime) AS dt FROM Events" +
+                                                         $" WHERE UserId = @userId and dateTime > @startDt and dateTime < @endDt" +
+                                                         $" ORDER BY dt ASC", new SqlParameter("userId", userId), new SqlParameter("startDt", startDate), new SqlParameter("endDt", endDate))
+                .ToListAsync(CancellationToken.None);
+
+            //return await Database.SqlQueryRaw<DateTime>($"SELECT DISTINCT CONVERT(date, dateTime) AS dt FROM Events" +
+            //                                      $" WHERE UserId = @userId and dateTime > @startDt and dateTime < @endDt" +
+            //                                      $" ORDER BY dt ASC", new SqlParameter("userId", userId), new SqlParameter("startDt", startDate), new SqlParameter("endDt", endDate))
+            //    .ToListAsync(CancellationToken.None);
         }
     }
 }

@@ -48,6 +48,7 @@ namespace Application.Services
                 .AsNoTracking()
                 .Include(u => u.Group)
                 .Where(u=>EF.Functions.Like(u.Name, $@"{username}%") || EF.Functions.Like(u.FullName, $@"{username}%"))
+                .Take(10)
                 //.Where(u => u.Name.StartsWith(username) || u.FullName.StartsWith(username))
                 .OrderBy(u => u.Name)
                 .ToListAsync(CancellationToken.None);
