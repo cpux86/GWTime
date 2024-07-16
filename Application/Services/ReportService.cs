@@ -151,9 +151,6 @@ namespace Application.Services
                 .ToListAsync(CancellationToken.None);
 
             stopwatch.Stop();
-            //смотрим сколько миллисекунд было затрачено на выполнение
-            //Console.WriteLine(stopwatch.ElapsedMilliseconds);
-
 
 
             var report = new Report
