@@ -134,70 +134,63 @@ namespace Application.Services
 
         public async Task<Report> GetReportByReaders(DateTime startDate, DateTime endDate, List<int> inputReader, List<int> outputReader, int messageId = 2)
         {
-
-            //inputReader.AddRange(outputReader);
-
-            Stopwatch stopwatch = new Stopwatch();
-            //засекаем время начала операции
-            stopwatch.Start();
             var usersList = await _dbContext.Users
                 .AsNoTracking()
                 .Include(e => e.Group)
                 .Include(u => u.Events!
                     .Where(e => e.DateTime >= startDate && e.DateTime <= endDate)
                     .Where(e => e.Code == messageId)
+                    //.Where(e=>e.UserId == 3985)
                     .Where(e => inputReader.Contains(e.ReaderId) || outputReader.Contains(e.ReaderId))
-                    .OrderBy(e => e.DateTime)).ThenInclude(e => e.Reader)
+                    .OrderBy(e => e.DateTime))
+                .ThenInclude(e => e.Reader)
                 .ToListAsync(CancellationToken.None);
-
-            stopwatch.Stop();
-
 
             var report = new Report
             {
                 Start = startDate,
                 End = endDate
             };
+            
 
-            var ids = usersList.Where(e=>e.Events.Count > 0).Select(e => e.Id).ToArray();
-
-            foreach (var user in usersList)
+            usersList.AsParallel().ForAll(user =>
             {
-
-                var worker = new Worker();
-                worker.Group = new Group
+                var worker = new Worker
                 {
-                    Name = user.Group.Name
+                    FullName = user.FullName,
+                    Name = user.Name,
+                    Group = new Group
+                    {
+                        Name = user.Group.Name
+                    }
                 };
 
-                worker.FullName = user.FullName;
-                worker.Name = user.Name;
-
-                var prev = new Event();
-                foreach (var evt in user.Events)
+                var e1 = new Event();
+                user.Events?.ForEach(e =>
                 {
-                    if (inputReader.Exists(x => x == prev.ReaderId) && outputReader.Exists(x => x == evt.ReaderId))
+                    if (inputReader.Exists(x => x == e1.ReaderId) && outputReader.Exists(x => x == e.ReaderId))
                     {
 
-                        var v = new WorkTime(prev.DateTime, evt.DateTime)
+                        var v = new WorkTime(e1.DateTime, e.DateTime)
                         {
-                            FirstReader = prev.Reader.Name,
-                            LastReader = evt.Reader.Name
+                            FirstReader = e1.Reader.Name,
+                            LastReader = e.Reader.Name
                         };
                         if (v.Total < TimeSpan.FromMinutes(5))
                         {
-                            Console.WriteLine($"ID {prev.Id} USR ID {evt.UserId} {evt.User.Name} {prev.DateTime} - {evt.DateTime} {v.Tot}");
+                            //Console.WriteLine($"ID {prev.Id} USR ID {evt.UserId} {evt.User.Name} {prev.DateTime} - {evt.DateTime} {v.Tot}");
                         }
 
                         worker.WorkTimes.Add(v);
                         worker.ContractInfo = "Т/Д";
                     }
-                    prev = evt;
-                }
-                
-                report.Workers.Add(worker);
+                    e1 = e;
+                });
 
-            }
+                report.Workers.Add(worker);
+            });
+
+
 
             var users = report.Workers.OrderBy(e => e.FullName)
                 .ThenBy(e => e.Group)
@@ -244,7 +237,6 @@ namespace Application.Services
             var enddt = startdt.AddDays(daysInMonth);
             return await _dbContext.GetWorkingDaysByUserId(userId, startdt, enddt);
         }
-
 
         public async Task<List<Event>> TrackingByUserIdAndDateAsync(int userId, DateTime dateTime)
         {

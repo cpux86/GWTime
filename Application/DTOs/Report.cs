@@ -19,7 +19,12 @@ namespace Application.DTOs
         public List<Group> Groups { get; set; }
 
         [JsonIgnore]
-        public List<Worker> Workers { get; set; } = new List<Worker>();
+        public List<Worker> Workers { get; } = new List<Worker>();
+
+        public void Item(Worker worker)
+        {
+            this.Workers.Add(worker);
+        }
 
     }
 
@@ -40,7 +45,6 @@ namespace Application.DTOs
     public class Worker 
     {
         private TimeSpan _total => TimeSpan.FromHours(WorkTimes.Sum(e => e.Total.TotalHours));
-        
         public string Name { get; set; } = string.Empty;
         public string FullName { get; set; } = string.Empty;
 

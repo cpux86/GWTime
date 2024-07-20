@@ -41,72 +41,6 @@ public class CreateReportForDay
         _client = new GWT.Client("http://localhost:55222", new HttpClient());
     }
 
-    //[ReplyMenuHandler("/start")]
-    //[ReplyMenuHandler("Хронос")]
-    //public async Task Start(ITelegramBotClient client, Update update)
-    //{
-    //    //var report = await _report.GetReportByReaders(DateTime.Parse("2024-01-01 06:00:00.00"),
-    //    //    DateTime.Now, new List<int> { 141 }, new List<int>() { 142 });
-    //    //var userList = report.Workers.Where(e => e.WorkTimes.Count > 0).ToList();
-    //    //var groups= userList.GroupBy(e => e.Group.Name).Select(e => new Group() { Name = e.Key, Workers = e.ToList() }).ToList();
-
-    //    //foreach (var group in groups)
-    //    //{
-    //    //    var msg = new StringBuilder();
-    //    //    msg.Append($"<b>#⃣ {group.Name} #⃣</b>\n\r");
-    //    //    msg.AppendJoin("\n", group.Workers.Select(e => e.Name = $"🙎‍♂️ {e.Name} 👉 {e.TotalTime}"));
-    //    //    var sendMessage = await PRTelegramBot.Helpers.Message.Send(client, update, msg.ToString());
-    //    //}
-
-
-    //    //string msg1 = "Меню";
-    //    ////Создаем настройки сообщения
-    //    //var option = new OptionMessage();
-    //    ////Создаем список для меню
-    //    //var menuList = new List<KeyboardButton>();
-    //    //foreach (var t in test)
-    //    //{
-    //    //    //Добавляем кнопку с текстом
-    //    //    menuList.Add(new KeyboardButton(t.Name));
-    //    //}
-
-
-    //    ////Генерируем reply меню
-    //    ////1 столбец, коллекция пунктов меню, вертикальное растягивание меню, пункт в самом низу по умолчанию
-    //    //var menu = MenuGenerator.ReplyKeyboard(2, menuList, true, "Главное меню");
-    //    ////Добавляем в настройки меню
-    //    //option.MenuReplyKeyboardMarkup = menu;
-    //    //await PRTelegramBot.Helpers.Message.Send(client, update, msg1, option);
-
-
-
-
-
-
-
-
-    //    string msg = "Выберите устройство";
-    //    List<IInlineContent> menu = new List<IInlineContent>();
-
-    //    menu.Add(new InlineCallback("<b>Хронос</b>", CustomTHeader.Chronos));
-    //    menu.Add(new InlineCallback("Курилка № 1", CustomTHeader.Kurilka1));
-    //    menu.Add(new InlineCallback("Курилка № 2", CustomTHeader.Kurilka2));
-    //    menu.Add(new InlineCallback("Гальваника", CustomTHeader.Galvanika));
-
-    //    //Генерация меню в 1 столбец
-    //    var menuItems = MenuGenerator.InlineKeyboard(1, menu);
-
-    //    var options = new OptionMessage();
-    //    //options.ParseMode = ParseMode.Html;
-    //    options.MenuInlineKeyboardMarkup = menuItems;
-
-
-    //    ////Регистрация обработчика для последовательной обработки шагов и сохранение данных
-    //    ////update.RegisterStepHandler(new StepTelegram(StepOne, new StepCache()));
-    //    await PRTelegramBot.Helpers.Message.Send(client, update, msg, options);
-    //}
-
-
     #region Users
 
     //[SlashHandler("/users")]
@@ -783,7 +717,7 @@ public class CreateReportForDay
     }
     private async Task SendReportMessageAsync(ITelegramBotClient client, Update update, DateTime startDayTime, DateTime endDayTime)
     {
-        var report = await _report.GetReportByReaders(startDayTime, endDayTime, new List<int> { 141 }, new List<int>() { 142 });
+        var report = await _report.GetReportByReaders(startDayTime, endDayTime, new List<int> { 105}, new List<int>() { 106});
 
         var usrList = report.Workers.Where(e => e.WorkTimes.Count > 0).ToList();
         var groups = usrList.GroupBy(e => e.Group.Name).Select(e => new Group() { Name = e.Key, Workers = e.ToList() })
@@ -804,8 +738,11 @@ public class CreateReportForDay
     private async Task SendReportDocumentAsync(ITelegramBotClient client, Update update, DateTime startDayTime, DateTime endDayTime)
     {
         //await PRTelegramBot.Helpers.Message.Send(client, update, "Обращение к базе данных");
-        var inputReader = new List<int> { 141 };
-        var outputReader = new List<int>() { 142 };
+        //var inputReader = new List<int> { 141 };
+        //var outputReader = new List<int>() { 142 };
+        var inputReader = new List<int> { 105 };
+        var outputReader = new List<int>() { 106 };
+
 
 
         var report = await _report.GetReportByReaders(startDayTime, endDayTime, inputReader, outputReader);

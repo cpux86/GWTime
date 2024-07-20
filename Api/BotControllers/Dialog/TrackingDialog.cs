@@ -274,7 +274,7 @@ namespace Api.BotControllers.Dialog
                     sb.Append($"<b>{fullName}</b>\n");
                     sb.AppendJoin("\n", events.OrderBy(e => e.DateTime)
                         .Select(e => $"[{e.DateTime:t}] {e.Reader.Name}")
-                        .Distinct()
+                        //.Distinct()
                     );
                     await Helpers.Message.Edit(botClient, update, sb.ToString(), option);
                     botClient.InvokeCommonLog($"{update.GetInfoUser()}| Tracking по фамилии: {fullName}, {command.Data.Date:d}");
