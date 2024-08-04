@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace DbCopy;
+namespace dbCopy;
 
-public partial class UserGroup
+public partial class Group
 {
     public int Id { get; set; }
 

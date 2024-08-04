@@ -1,3 +1,4 @@
+using System.Globalization;
 using Domain;
 using GateLogger.Infrastructure;
 using GateLogger.Services;
@@ -19,20 +20,12 @@ namespace GateLogger;
 
 public partial class Worker : BackgroundService
 {
-
-
-
-
     private static ILogger<Worker> _logger;
-
-    //private readonly EventsDbContext _dbContext;
-    private static IMemoryCache _cache;
     private static IConfiguration _configuration;
 
-    public Worker(ILogger<Worker> logger, IMemoryCache cache, IConfiguration configuration)
+    public Worker(ILogger<Worker> logger, IConfiguration configuration)
     {
         _logger = logger;
-        _cache = cache;
         _configuration = configuration;
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
@@ -41,9 +34,8 @@ public partial class Worker : BackgroundService
     {
         GateTcpClient.NewEvent += NewEventHandler;
         
-
-
         var serverValue = _configuration.GetSection("GateServer").Value;
+        if (serverValue.IsNullOrEmpty()) serverValue = "127.0.0.1:1917";
 
         var addressList = serverValue?.Split(";", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         if (addressList != null)
@@ -53,57 +45,25 @@ public partial class Worker : BackgroundService
                 if (endpoint.Port == 0) endpoint.Port = 1917;
                 var ip = endpoint.Address.ToString();
                 var port = endpoint.Port;
-                //new GateTcpClient(ip, 1234).ConnectAsync();
-                new GateTcpClient(ip, 1917)
+                var client = new GateTcpClient(ip, 1917, _logger)
                 {
                     OptionKeepAlive = true,
                     OptionTcpKeepAliveTime = 30
-                }.ConnectAsync();
-
-
-                //var client = new GateTcpClient(ip)
-                //{
-                //    OptionKeepAlive = true,
-                //    OptionTcpKeepAliveTime = 30
-                //};
-                //client.ConnectAsync();
+                };
+                client.ConnectAsync();
                 
-
-                //using var sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-
-
-                //var  args = new SocketAsyncEventArgs();
-
-
-                //sock.ConnectAsync(args);
-
-
-
-                //var socket = args.ConnectSocket;
-                //if (socket != null)
-                //    await socket.ConnectAsync(IPAddress.Parse("10.65.69.99"), 1917, CancellationToken.None);
-                //if (socket.Connected)
-                //{
-                //    Console.WriteLine("Connected ");
-                //}
-
-
-
-
-
-
             }
-        while (true)
+
+        while (!stoppingToken.IsCancellationRequested)
         {
-            var r = await GateTcpClient.ReadMessage();
-            Console.WriteLine($"пользователь : {r.FullName}");
+            var msg = await GateTcpClient.ReadMessage();
+            Console.WriteLine($"Сообщение: {msg.FullName}");
         }
-
-
         await Task.CompletedTask;
+
     }
 
-
+    // обработчик ответа сервера
     private static void NewEventHandler(EventResponse e)
     {
         if (e.UserId == 0)
@@ -111,19 +71,9 @@ public partial class Worker : BackgroundService
             Console.WriteLine($"Log {e.Message} {e.ReaderName}");
             return;
         }
+
         using var db = new EventsDbContext();
 
-
-        //var eUsers = db.Users.ToList();
-        //foreach (var user1 in eUsers)
-        //{
-        //    user1.Key = "999/99999";
-        //    user1.LastEventMessage = string.Empty;
-        //    user1.LastUsedKeyDate = DateTime.MinValue;
-        //    user1.LastUsedReaderName = string.Empty;
-        //}
-
-        //db.SaveChanges();
 
         var userName = Wiegand26Regex().Replace(e.UserName, "").Trim();
         // извлекаем номер ключа
@@ -147,23 +97,7 @@ public partial class Worker : BackgroundService
 
 
         var user = db.Users.FirstOrDefault(u => u.Id == e.UserId) ?? new User { Id = e.UserId, FullName = e.FullName, Name = userName };
-        //User user;
-        //if (!_cache.TryGetValue(e.UserId, out user))
-        //{
-        //    user = db.Users.FirstOrDefault(u => u.Id == e.UserId) ?? new User { Id = e.UserId, FullName = e.FullName, Name = userName };
-        //    if (user != null)
-        //    {
-        //        _cache.Set(user.Id, user,
-        //            new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromMinutes(5)));
-        //    }
-        //}
 
-        
-
-        //var users = db.Users.Where(u => u.Id == e.UserId || u.Key == key).ToList() ?? new List<User>()
-        //{
-        //    new User { Id = e.UserId, FullName = e.FullName, Name = userName }
-        //};
 
         var users = db.Users.Where(u => u.Id == e.UserId || u.Key == key).ToList();
 
@@ -172,14 +106,13 @@ public partial class Worker : BackgroundService
             u.Key = string.Empty;
         }
 
-
-
         user.Name = userName;
         user.FullName = e.FullName;
         user.Group = group;
         user.Key = key;
 
         var dateTime = DateTime.Parse(e.DateTime);
+
         // если пришло новое событие или проходов у user еще не было, то обновляем данные о последнем проходе проходе
         if (dateTime > user.LastUsedKeyDate || user.LastUsedKeyDate is null)
         {
@@ -196,23 +129,23 @@ public partial class Worker : BackgroundService
             Code = e.Code
 
         };
-
+        
         db.Events.Add(evt);
-
 
         try
         {
-            //await db.SaveChangesAsync(CancellationToken.None);
             db.SaveChanges();
-            Console.WriteLine($"{evt.DateTime:G} {user.Name} {e.Message} {e.ReaderName}");
-
-            //_logger.LogInformation(message: e.message);
         }
+        //catch (DbUpdateException exception)
+        //{
+        //    Console.WriteLine(exception.Message);
+        //}
 
         catch (Exception exception)
         {
-            Console.WriteLine(exception.InnerException!.Message);
+            _logger.LogInformation(exception.InnerException!.Message);
         }
+
     }
 
     [GeneratedRegex("^[0-9]{3}\\/[0-9]{5}")]

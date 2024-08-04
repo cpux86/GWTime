@@ -20,9 +20,11 @@ namespace GateLogger.Infrastructure
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            //optionsBuilder
+            optionsBuilder
+                .UseSqlServer("Server=10.65.68.252; Database=GWT0905; User ID=sa; Password=LaMp368&;Integrated Security=true;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False");
+            //optionsBuilder.LogTo(System.Console.WriteLine, LogLevel.Information);
             //.UseSqlServer(System.Environment.GetEnvironmentVariable("ConnectionStrings:GWT0905"));
-            optionsBuilder.UseSqlServer("Server=10.65.68.252; Database=GWTime_test2.12111111; User ID=sa; Password=LaMp368&;Integrated Security=false;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False");
+            //optionsBuilder.UseSqlServer("Server=10.65.68.252; Database=GWTime_test2.12111111; User ID=sa; Password=LaMp368&;Integrated Security=false;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False");
             //.UseSqlServer("Server=10.65.68.252; Database=GWT0905; User ID=sa; Password=LaMp368&;Integrated Security=false;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False");
             //optionsBuilder.LogTo(System.Console.WriteLine, LogLevel.Information);
             optionsBuilder.LogTo(message => System.Diagnostics.Debug.WriteLine(message));

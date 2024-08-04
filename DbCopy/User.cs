@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace DbCopy;
+namespace dbCopy;
 
 public partial class User
 {
@@ -11,9 +11,17 @@ public partial class User
 
     public string FullName { get; set; } = null!;
 
-    public int? UserGroupId { get; set; }
+    public int? GroupId { get; set; }
+
+    public string? Key { get; set; }
+
+    public DateTime? LastUsedKeyDate { get; set; }
+
+    public string? LastUsedReaderName { get; set; }
+
+    public string? LastEventMessage { get; set; }
 
     public virtual ICollection<Event> Events { get; set; } = new List<Event>();
 
-    public virtual UserGroup? UserGroup { get; set; }
+    public virtual Group? Group { get; set; }
 }

@@ -57,10 +57,10 @@ namespace Application.DTOs
         public string TotalTime => $"{(int)_total.TotalHours:00}:{_total.Minutes:00}";
 
         [JsonPropertyName("details")]
-        public List<WorkTime> WorkTimes { get; set; } = new List<WorkTime>();
+        public List<WorkShift> WorkTimes { get; set; } = new List<WorkShift>();
     }
 
-    public class WorkTime
+    public class WorkShift
     {
         // Время входа
         //[JsonPropertyName("t1")]
@@ -88,7 +88,7 @@ namespace Application.DTOs
         [JsonPropertyName("time")]
         public string Tot => $"{(int)Total.TotalHours:00}:{Total.Minutes:00}";
 
-        public WorkTime(DateTime dt1, DateTime dt2)
+        public WorkShift(DateTime dt1, DateTime dt2)
         {
             this.EntryTime = dt1;
             this.ExitTime = dt2;

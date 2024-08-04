@@ -8,10 +8,8 @@ public class Event
 {
     public int Id { get; set; }
 
-    [Column("Code")]
+    //[Column("code")]
     public short Code { get; set; }
-    //public Message Message { get; set; }
-
     public string Message => Code switch
     {
         1 => "Нет доступа. Неразрешенный ключ",
@@ -20,11 +18,11 @@ public class Event
         _ => throw new ArgumentOutOfRangeException()
     };
 
-    //[Column("readerId")]
+    //[Column("reader_id")]
     public short ReaderId { get; set; }
     public Reader Reader { get; set; } = new();
 
-    //[Column("userId")]
+    //[Column("user_id")]
     public int UserId { get; set; }
     public User? User { get; set; }
 

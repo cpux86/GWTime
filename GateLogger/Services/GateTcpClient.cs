@@ -1,4 +1,5 @@
 ﻿using GateLogger.Services.StartEvents;
+using Microsoft.Extensions.Logging;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
@@ -8,19 +9,21 @@ namespace GateLogger.Services
 {
     public class GateTcpClient : TcpClient
     {
-        private const int _port = 1917;
+        //private const int _port = 1917;
         private bool _stop;
         private readonly object _lock = new object();
         //public static event Func<EventResponse, Task>? NewEvent;
         public static event Action<EventResponse>? NewEvent;
+        private readonly ILogger<Worker> _logger;
 
         //private Action<EventResponse> _action;
 
-        public GateTcpClient(string address) : base(address, _port)
-        {
-            //_action = onResponse;
-        }
-        public GateTcpClient(string address, int port) : base(address, port) { }
+        //public GateTcpClient(string address) : base(address, _port)
+        //{
+        //    //_action = onResponse;
+        //}
+
+        public GateTcpClient(string address, int port, ILogger<Worker> logger) : base(address, port) => _logger = logger;
 
         public void DisconnectAndStop()
         {
@@ -32,7 +35,7 @@ namespace GateLogger.Services
 
         protected override void OnConnected()
         {
-            Console.WriteLine($"Установлено соединение с сервером {Address} {Port}");
+            _logger.LogInformation($"Установлено соединение с сервером {Address} {Port}");
             //this.SendAsync(JsonSerializer.Serialize(new GetConfigCommand()));
 
             //this.Send(new byte[] { 0x0 });
@@ -43,11 +46,12 @@ namespace GateLogger.Services
 
         protected override void OnDisconnected()
         {
-            Console.WriteLine($"Client disconnected a session with Id {Id} {Address} {Port}");
+            //Console.WriteLine($"Client disconnected a session with Id {Id} {Address} {Port}");
+            _logger.LogInformation($"Client disconnected a session with Id {Id} {Address} {Port}");
 
             // Wait for a while...
             Thread.Sleep(1000);
-
+            
             // Try to connect again
             if (!_stop)
                 ConnectAsync();
@@ -55,6 +59,7 @@ namespace GateLogger.Services
 
 
         private readonly List<byte> _receiveBuffer = new();
+       
         protected override void OnReceived(byte[] buffer, long offset, long size)
         {
             var encodingBytes = Encoding.Convert(Encoding.GetEncoding(1251), Encoding.UTF8, buffer, (int)offset, (int)size);
@@ -72,20 +77,16 @@ namespace GateLogger.Services
             {
                 try
                 {
-                    //Console.WriteLine(str);
                     var result = JsonSerializer.Deserialize<StartEventsResponse>(str,
                         new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                     var gateEvent = result?.Event;
                     if (gateEvent == null) continue;
                     NewEvent?.Invoke(gateEvent);
-                    //lock (_lock)
-                    //{
-                    //    NewEvent!(gateEvent);
-                    //}
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e.Message);
+                    //_logger.LogWarning(e.Message);
+                    _logger.LogError(e.Message);
                 }
             }
 

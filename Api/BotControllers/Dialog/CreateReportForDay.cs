@@ -718,7 +718,7 @@ public class CreateReportForDay
     private async Task SendReportMessageAsync(ITelegramBotClient client, Update update, DateTime startDayTime, DateTime endDayTime)
     {
         var report = await _report.GetReportByReaders(startDayTime, endDayTime, new List<int> { 105}, new List<int>() { 106});
-
+        
         var usrList = report.Workers.Where(e => e.WorkTimes.Count > 0).ToList();
         var groups = usrList.GroupBy(e => e.Group.Name).Select(e => new Group() { Name = e.Key, Workers = e.ToList() })
             .ToList();

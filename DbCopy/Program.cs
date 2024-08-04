@@ -1,24 +1,47 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿using System;
 
-using DbCopy;
-using Domain;
-using Microsoft.EntityFrameworkCore;
-
-//Console.WriteLine("Hello, World!");
-
-
-var db = new GwtimeTest2Context();
-var evt = await db.Events
-    .AsNoTracking()
-    .Include(e=>e.User)
-    .ThenInclude(e=>e.UserGroup)
-    .Include(e=>e.Reader)
-    .ToListAsync(CancellationToken.None);
-foreach (var e in evt)
+namespace dbCopy
 {
-    new Domain.Event()
+    internal class Program
     {
-        
-    };
-    Console.WriteLine(e.DateTime);
+        static void Main(string[] args)
+        {
+            Console.WriteLine("Hello, World!");
+
+            using (var db = new SQLiteContext())
+            {
+                var events = db.Events.Where(e=>e.UserPtr != "0").ToList();
+
+                foreach (var e in events)
+                {
+                    var appEvt = new Event();
+                    appEvt.UserId = int.Parse(e.UserPtr);
+                    appEvt.DateTime = (DateTime)e.DateTime;
+                    appEvt.Code = short.Parse(e.EventCode);
+                    appEvt.ReaderId = short.Parse(e.RdrPtr);
+
+
+                    using (var ms = new Gwt0905Context())
+                    {
+                        try
+                        {
+                            ms.Events.Add(appEvt);
+                            ms.SaveChanges();
+                            Console.WriteLine($"Добавлено!");
+                        }
+                        catch (Exception exception)
+                        {
+                            // Console.WriteLine(exception.InnerException.Message);
+                            Console.WriteLine($"Дубикат!");
+                        }
+                        
+                    }
+                }
+
+                
+            }
+
+            
+        }
+    }
 }

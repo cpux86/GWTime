@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -134,6 +135,9 @@ namespace Application.Services
 
         public async Task<Report> GetReportByReaders(DateTime startDate, DateTime endDate, List<int> inputReader, List<int> outputReader, int messageId = 2)
         {
+            //startDate = DateTime.Parse("2024-07-16 06:00:00.00");
+            //startDate = DateTime.Parse("2024-07-13 06:00:00.00");
+            //endDate = DateTime.Parse("2024-07-10 10:00:00.00");
             var usersList = await _dbContext.Users
                 .AsNoTracking()
                 .Include(e => e.Group)
@@ -141,6 +145,13 @@ namespace Application.Services
                     .Where(e => e.DateTime >= startDate && e.DateTime <= endDate)
                     .Where(e => e.Code == messageId)
                     //.Where(e=>e.UserId == 3985)
+                    //.Where(e=>e.UserId == 4641)
+                    //.Where(e => e.UserId == 4552)
+                    //.Where(e => e.UserId == 4469)
+                    //.Where(e => e.UserId == 4198)
+                    //.Where(e => e.UserId == 4635)
+                    .Where(e => e.UserId == 4649)
+                    //.Where(e=>e.ReaderId != 109)
                     .Where(e => inputReader.Contains(e.ReaderId) || outputReader.Contains(e.ReaderId))
                     .OrderBy(e => e.DateTime))
                 .ThenInclude(e => e.Reader)
@@ -151,9 +162,10 @@ namespace Application.Services
                 Start = startDate,
                 End = endDate
             };
-            
 
-            usersList.AsParallel().ForAll(user =>
+
+
+            foreach (var user in usersList)
             {
                 var worker = new Worker
                 {
@@ -166,29 +178,223 @@ namespace Application.Services
                 };
 
                 var e1 = new Event();
-                user.Events?.ForEach(e =>
-                {
-                    if (inputReader.Exists(x => x == e1.ReaderId) && outputReader.Exists(x => x == e.ReaderId))
-                    {
+                TimeSpan ts = TimeSpan.Zero;
+                Event evtIn = null;
+                Event evtOut = null;
 
-                        var v = new WorkTime(e1.DateTime, e.DateTime)
+
+                    foreach (var e2 in user.Events)
+                    {
+                        if (evtIn == null)
                         {
-                            FirstReader = e1.Reader.Name,
-                            LastReader = e.Reader.Name
-                        };
-                        if (v.Total < TimeSpan.FromMinutes(5))
-                        {
-                            //Console.WriteLine($"ID {prev.Id} USR ID {evt.UserId} {evt.User.Name} {prev.DateTime} - {evt.DateTime} {v.Tot}");
+                            e1 = e2;
+                            evtIn = e2;
+                            continue;
                         }
 
-                        worker.WorkTimes.Add(v);
-                        worker.ContractInfo = "Т/Д";
-                    }
-                    e1 = e;
-                });
 
+                        var tmpTs = e2.DateTime - e1.DateTime;
+                        
+
+
+                        if (outputReader.Contains(e1.ReaderId) && tmpTs.TotalHours > 6)
+                        {
+                            //Console.WriteLine(1);
+                            if (evtOut != null)
+                            {
+                                var v = new WorkShift(evtIn.DateTime, evtOut.DateTime)
+                                {
+                                    FirstReader = evtIn.Reader.Name,
+                                    LastReader = evtOut.Reader.Name
+                                };
+                                Console.WriteLine($"{worker.Name} - {v.EntryTime} - {v.ExitTime} итого: {v.Tot}");
+                                worker.WorkTimes.Add(v);
+                                worker.ContractInfo = "Т/Д";
+                                evtOut = null;
+                            }
+
+
+                            //Console.WriteLine($"{e1.User.Name} Начало новой смены - {e2.DateTime}");
+                            //Console.WriteLine($"{e2.User.Name} - |{evtIn.DateTime} {e1.DateTime}| {ts}");
+                            e1 = e2;
+
+                            ts = TimeSpan.Zero;
+                            evtIn = e2;
+                            continue;
+                        }
+
+                        evtOut = e2;
+                        ts += tmpTs;
+                        e1 = e2;
+                    }
                 report.Workers.Add(worker);
-            });
+            }
+
+
+
+
+            //usersList.ForEach(user =>
+            //{
+            //    var worker = new Worker
+            //    {
+            //        FullName = user.FullName,
+            //        Name = user.Name,
+            //        Group = new Group
+            //        {
+            //            Name = user.Group.Name
+            //        }
+            //    };
+
+            //    var e1 = new Event();
+            //    TimeSpan ts = TimeSpan.Zero;
+            //    Event evtIn = null;
+            //    Event evtOut = null;
+
+
+
+
+            //    foreach (var e2 in user.Events)
+            //    {
+            //        var t = user.Events;
+            //        if (evtIn == null)
+            //        {
+            //            evtIn = e2;
+            //            e1 = e2;
+            //            return;
+            //        }
+
+
+            //        var tmpTs = e2.DateTime - e1.DateTime;
+            //        evtOut = e2;
+
+            //        if (outputReader.Contains(e1.ReaderId) && tmpTs.Hours > 6)
+            //        {
+            //            Console.WriteLine($"{e1.User.Name} Начало новой смены - {e2.DateTime}");
+            //            //Console.WriteLine($"{e2.User.Name} - |{evtIn.DateTime} {e1.DateTime}| {ts}");
+            //            e1 = e2;
+
+            //            ts = TimeSpan.Zero;
+            //            evtIn = e2;
+            //            return;
+            //        }
+            //        ts += tmpTs;
+            //    }
+
+            //    //user.Events?.ForEach(e2 =>
+            //    //{
+            //    //    var t = user.Events;
+            //    //    if (evtIn == null)
+            //    //    {
+            //    //        evtIn = e2;
+            //    //        e1 = e2;
+            //    //        return;
+            //    //    }
+
+
+            //    //    var tmpTs = e2.DateTime - e1.DateTime;
+            //    //    evtOut = e2;
+
+            //    //    if (outputReader.Contains(e1.ReaderId) && tmpTs.Hours > 6)
+            //    //    {
+            //    //        Console.WriteLine($"{e1.User.Name} Начало новой смены - {e2.DateTime}");
+            //    //        //Console.WriteLine($"{e2.User.Name} - |{evtIn.DateTime} {e1.DateTime}| {ts}");
+            //    //        e1 = e2;
+
+            //    //        ts = TimeSpan.Zero;
+            //    //        evtIn = e2;
+            //    //        return;
+            //    //    }
+            //    //    ts += tmpTs;
+
+            //    //    //Console.WriteLine($"{e2.User.Name} - |{evtIn.DateTime} {e1.DateTime}| {ts}");
+
+            //    //    //if (inputReader.Exists(x => x == e1.ReaderId) && outputReader.Exists(x => x == e2.ReaderId))
+            //    //    //{
+
+            //    //    //    var v = new WorkShift(e1.DateTime, e2.DateTime)
+            //    //    //    {
+            //    //    //        FirstReader = e1.Reader.Name,
+            //    //    //        LastReader = e2.Reader.Name
+            //    //    //    };
+            //    //    //    if (v.Total < TimeSpan.FromMinutes(5))
+            //    //    //    {
+            //    //    //        //Console.WriteLine($"ID {prev.Id} USR ID {evt.UserId} {evt.User.Name} {prev.DateTime} - {evt.DateTime} {v.Tot}");
+            //    //    //    }
+
+            //    //    //    worker.WorkTimes.Add(v);
+            //    //    //    worker.ContractInfo = "Т/Д";
+            //    //    //}
+            //    //    //e1 = e2;
+
+            //    //});
+
+            //    report.Workers.Add(worker);
+            //});
+
+
+
+
+
+
+
+
+
+
+
+            //usersList.AsParallel().ForAll(user =>
+            //{
+            //    var worker = new Worker
+            //    {
+            //        FullName = user.FullName,
+            //        Name = user.Name,
+            //        Group = new Group
+            //        {
+            //            Name = user.Group.Name
+            //        }
+            //    };
+
+            //    var e1 = new Event();
+            //    TimeSpan ts = TimeSpan.Zero;
+
+            //    user.Events?.ForEach(e =>
+            //    {
+            //        if (e1.ReaderId > 0)
+            //        {
+
+            //            var wt1 = e.DateTime - e1.DateTime;
+            //            if (e1.ReaderId == 106 && wt1.Hours > 8)
+            //            {
+            //                Console.WriteLine(ts);
+            //                ts = TimeSpan.Zero;
+
+            //                return;
+            //            }
+            //            ts += wt1;
+            //            //Console.WriteLine(ts);
+            //        }
+
+
+            //        //if (inputReader.Exists(x => x == e1.ReaderId) && outputReader.Exists(x => x == e.ReaderId))
+            //        //{
+
+            //        //    var v = new WorkShift(e1.DateTime, e.DateTime)
+            //        //    {
+            //        //        FirstReader = e1.Reader.Name,
+            //        //        LastReader = e.Reader.Name
+            //        //    };
+            //        //    if (v.Total < TimeSpan.FromMinutes(5))
+            //        //    {
+            //        //        //Console.WriteLine($"ID {prev.Id} USR ID {evt.UserId} {evt.User.Name} {prev.DateTime} - {evt.DateTime} {v.Tot}");
+            //        //    }
+
+            //        //    worker.WorkTimes.Add(v);
+            //        //    worker.ContractInfo = "Т/Д";
+            //        //}
+            //        e1 = e;
+            //    });
+            //    //Console.WriteLine(ts);
+            //    report.Workers.Add(worker);
+            //});
 
 
 
