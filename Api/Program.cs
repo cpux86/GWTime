@@ -49,7 +49,7 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddGrpc();
+//builder.Services.AddGrpc();
 
 
 var app = builder.Build();
@@ -91,7 +91,6 @@ app.MapControllers();
 
 var serviceProvider = app.Services.GetService<IServiceProvider>();
 
-
 var telegram = new PRBotBuilder(token)
     .SetBotId(0)
     //.AddAdmin(1111111)
@@ -111,10 +110,10 @@ Task EventsOnCommonLog(PRTelegramBot.Models.EventsArgs.CommonLogEventArgs arg)
     return Task.CompletedTask;
 }
 
-static async  Task EventsOnMissingCommand(PRTelegramBot.Models.EventsArgs.BotEventArgs arg)
+static async Task EventsOnMissingCommand(PRTelegramBot.Models.EventsArgs.BotEventArgs arg)
 {
     arg.Update.ClearStepUserHandler();
-    await Helpers.Message.Send(arg.BotClient, arg.Update.GetChatId(), "Что-то пошло не так... /start");
+    await Helpers.Message.Send(arg.BotClient, arg.Update.GetChatId(), "Не верный запрос... /start");
 
 }
 

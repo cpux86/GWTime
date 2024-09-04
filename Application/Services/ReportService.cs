@@ -150,7 +150,7 @@ namespace Application.Services
                     //.Where(e => e.UserId == 4469)
                     //.Where(e => e.UserId == 4198)
                     //.Where(e => e.UserId == 4635)
-                    .Where(e => e.UserId == 4649)
+                    //.Where(e => e.UserId == 4649)
                     //.Where(e=>e.ReaderId != 109)
                     .Where(e => inputReader.Contains(e.ReaderId) || outputReader.Contains(e.ReaderId))
                     .OrderBy(e => e.DateTime))

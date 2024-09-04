@@ -7,6 +7,7 @@ using Microsoft.Extensions.Caching.Memory;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -14,9 +15,6 @@ using Group = Domain.Group;
 
 
 namespace GateLogger;
-
-
-
 
 public partial class Worker : BackgroundService
 {
@@ -66,6 +64,9 @@ public partial class Worker : BackgroundService
     // обработчик ответа сервера
     private static void NewEventHandler(EventResponse e)
     {
+        var info = JsonSerializer.Serialize<OtherInfo>(e.OtherInfo);
+        var orig = JsonSerializer.Deserialize<OtherInfo>(info);
+        
         if (e.UserId == 0)
         {
             Console.WriteLine($"Log {e.Message} {e.ReaderName}");

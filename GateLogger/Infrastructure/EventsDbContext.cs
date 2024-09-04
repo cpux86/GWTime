@@ -21,11 +21,11 @@ namespace GateLogger.Infrastructure
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder
-                .UseSqlServer("Server=10.65.68.252; Database=GWT0905; User ID=sa; Password=LaMp368&;Integrated Security=true;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False");
+                //.UseSqlServer(@"Server=.; Database=gl;Trusted_Connection=True;MultipleActiveResultSets=True;Encrypt=False;");
             //optionsBuilder.LogTo(System.Console.WriteLine, LogLevel.Information);
             //.UseSqlServer(System.Environment.GetEnvironmentVariable("ConnectionStrings:GWT0905"));
             //optionsBuilder.UseSqlServer("Server=10.65.68.252; Database=GWTime_test2.12111111; User ID=sa; Password=LaMp368&;Integrated Security=false;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False");
-            //.UseSqlServer("Server=10.65.68.252; Database=GWT0905; User ID=sa; Password=LaMp368&;Integrated Security=false;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False");
+            .UseSqlServer("Server=10.65.68.252; Database=GWT0905; User ID=sa; Password=LaMp368&;Integrated Security=false;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False");
             //optionsBuilder.LogTo(System.Console.WriteLine, LogLevel.Information);
             optionsBuilder.LogTo(message => System.Diagnostics.Debug.WriteLine(message));
 
@@ -39,27 +39,6 @@ namespace GateLogger.Infrastructure
         //    //.HasDefaultValueSql("getdate()");
         //}
 
-
-        //public override int SaveChanges()
-        //{
-        //    var entries = ChangeTracker
-        //        .Entries()
-        //        .Where(e => e.Entity is BaseEntity && (
-        //            e.State == EntityState.Added || e.State == EntityState.Modified));
-
-        //    foreach (var entityEntry in entries)
-        //    {
-        //        var dt = DateTime.Now;
-        //        ((BaseEntity)entityEntry.Entity).UpdatedDate = dt;
-
-        //        if (entityEntry.State == EntityState.Added)
-        //        {
-        //            ((BaseEntity)entityEntry.Entity).CreatedDate = dt;
-        //        }
-        //    }
-
-        //    return base.SaveChanges();
-        //}
 
     }
 }
