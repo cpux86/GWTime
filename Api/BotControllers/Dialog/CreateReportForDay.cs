@@ -1,5 +1,4 @@
-﻿using Api.Models;
-using Application.Interfaces;
+﻿using Application.Interfaces;
 using PRTelegramBot.Attributes;
 using PRTelegramBot.Extensions;
 using PRTelegramBot.Models;

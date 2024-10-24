@@ -4,7 +4,6 @@ using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.JavaScript;
 using System.Text;
-using Api.Models;
 using Application.DTOs;
 using Application.Interfaces;
 using Domain;
