@@ -783,7 +783,7 @@ public class CreateReportForDay
     }
     private async Task SendReportMessageAsync(ITelegramBotClient client, Update update, DateTime startDayTime, DateTime endDayTime)
     {
-        var report = await _report.GetReportByReaders(startDayTime, endDayTime, new List<int> { 141 }, new List<int>() { 142 });
+        var report = await _report.GetReportByReaders(startDayTime, endDayTime, new List<int> { 141, 87}, new List<int>() { 142, 88 });
 
         var usrList = report.Workers.Where(e => e.WorkTimes.Count > 0).ToList();
         var groups = usrList.GroupBy(e => e.Group.Name).Select(e => new Group() { Name = e.Key, Workers = e.ToList() })
@@ -804,8 +804,8 @@ public class CreateReportForDay
     private async Task SendReportDocumentAsync(ITelegramBotClient client, Update update, DateTime startDayTime, DateTime endDayTime)
     {
         //await PRTelegramBot.Helpers.Message.Send(client, update, "Обращение к базе данных");
-        var inputReader = new List<int> { 141 };
-        var outputReader = new List<int>() { 142 };
+        var inputReader = new List<int> { 141, 87};
+        var outputReader = new List<int>() { 142, 88 };
 
 
         var report = await _report.GetReportByReaders(startDayTime, endDayTime, inputReader, outputReader);

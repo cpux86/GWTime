@@ -151,9 +151,6 @@ namespace Application.Services
                 .ToListAsync(CancellationToken.None);
 
             stopwatch.Stop();
-            //смотрим сколько миллисекунд было затрачено на выполнение
-            //Console.WriteLine(stopwatch.ElapsedMilliseconds);
-
 
 
             var report = new Report
@@ -162,7 +159,6 @@ namespace Application.Services
                 End = endDate
             };
 
-            var ids = usersList.Where(e=>e.Events.Count > 0).Select(e => e.Id).ToArray();
 
             foreach (var user in usersList)
             {
@@ -225,10 +221,10 @@ namespace Application.Services
         {
             var users = await _dbContext.Events
                 .AsNoTracking()
-                .Include(e=>e.User)
+                .Include(e => e.User)
                 .Where(e => e.DateTime >= startDate && e.DateTime <= endDate)
-                .GroupBy(e=>e.User).Select(e=>e.Key)
-                .OrderBy(e=>e.Name)
+                .GroupBy(e => e.User).Select(e => e.Key)
+                .OrderBy(e => e.Name)
                 .ToListAsync(CancellationToken.None);
 
             return users;
