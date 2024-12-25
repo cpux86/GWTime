@@ -71,7 +71,7 @@ namespace Api.BotControllers.Dialog
             // если по запросу найдено больше одного человека, по предлагаю уточнить запрос или выбрать фио из предложенных. 
             if (users.Count > 1 )
             {
-                var userList = users.Take(250).Select(user => new KeyboardButton($"{user.FullName}")).ToList();
+                var userList = users.Take(250).Select(user => new KeyboardButton($"u{user.Id}_{user.FullName}")).ToList();
 
                 var menu = MenuGenerator.ReplyKeyboard(1, userList, true, "Главное меню");
                 var options = new OptionMessage();

@@ -26,15 +26,12 @@ public partial class Worker : BackgroundService
         _logger = logger;
         _configuration = configuration;
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
     }
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        GateTcpClient.NewEvent += NewEventHandler;
-        
         var serverValue = _configuration.GetSection("GateServer").Value;
         if (serverValue.IsNullOrEmpty()) serverValue = "127.0.0.1:1917";
-
+        
         var addressList = serverValue?.Split(";", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         if (addressList != null)
             foreach (var address in addressList)
@@ -43,30 +40,28 @@ public partial class Worker : BackgroundService
                 if (endpoint.Port == 0) endpoint.Port = 1917;
                 var ip = endpoint.Address.ToString();
                 var port = endpoint.Port;
-                var client = new GateTcpClient(ip, 1917, _logger)
+                var client = new GateTcpClient(ip, port, _logger)
                 {
                     OptionKeepAlive = true,
                     OptionTcpKeepAliveTime = 30
                 };
                 client.ConnectAsync();
-                
             }
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            var msg = await GateTcpClient.ReadMessage();
-            Console.WriteLine($"Сообщение: {msg.FullName}");
+            var evt = await GateTcpClient.ReadMessageAsync(stoppingToken);
+            NewEventHandler(evt);
+            Console.WriteLine($"Новое сообщение: {evt.FullName}");
         }
-        await Task.CompletedTask;
+        //await Task.CompletedTask;
 
     }
 
     // обработчик ответа сервера
     private static void NewEventHandler(EventResponse e)
     {
-        var info = JsonSerializer.Serialize<OtherInfo>(e.OtherInfo);
-        var orig = JsonSerializer.Deserialize<OtherInfo>(info);
-        
+
         if (e.UserId == 0)
         {
             Console.WriteLine($"Log {e.Message} {e.ReaderName}");
@@ -76,7 +71,7 @@ public partial class Worker : BackgroundService
         using var db = new EventsDbContext();
 
 
-        var userName = Wiegand26Regex().Replace(e.UserName, "").Trim();
+        var userName = Wiegand26Regex().Replace(e.UserName, string.Empty).Trim();
         // извлекаем номер ключа
         var key = Wiegand26Regex().Match(e.UserName).Value;
 
@@ -102,10 +97,14 @@ public partial class Worker : BackgroundService
 
         var users = db.Users.Where(u => u.Id == e.UserId || u.Key == key).ToList();
 
-        foreach (var u in users.Where(u => u.Id != e.UserId))
-        {
-            u.Key = string.Empty;
-        }
+        //foreach (var u in users.Where(u => u.Id != e.UserId))
+        //{
+        //    //u.Key = string.Empty;
+        //    db.Users.Remove(u);
+        //}
+
+        var oldUsers = users.Where(u => u.Id != e.UserId).ToList();
+        db.Users.RemoveRange(oldUsers);
 
         user.Name = userName;
         user.FullName = e.FullName;
@@ -114,7 +113,7 @@ public partial class Worker : BackgroundService
 
         var dateTime = DateTime.Parse(e.DateTime);
 
-        // если пришло новое событие или проходов у user еще не было, то обновляем данные о последнем проходе проходе
+        // если пришло новое событие или проходов у user еще не было, то обновляем данные о последнем проходе
         if (dateTime > user.LastUsedKeyDate || user.LastUsedKeyDate is null)
         {
             user.LastUsedKeyDate = dateTime;
@@ -137,10 +136,7 @@ public partial class Worker : BackgroundService
         {
             db.SaveChanges();
         }
-        //catch (DbUpdateException exception)
-        //{
-        //    Console.WriteLine(exception.Message);
-        //}
+
 
         catch (Exception exception)
         {
