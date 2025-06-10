@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+	  <RollForward>Major</RollForward>
 	  <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 	  <LangVersion>11</LangVersion>
@@ -61,6 +62,14 @@
   <ItemGroup>
     <ProjectReference Include="..\Application\Application.csproj" />
     <ProjectReference Include="..\Persistence\Persistence.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\cpux86\.nuget\packages\prtelegrambot\0.6.0\build\\README.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\cpux86\.nuget\packages\prtelegrambot\0.6.0\build\\README.txt" />
   </ItemGroup>
 
 </Project>

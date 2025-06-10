@@ -96,7 +96,9 @@ namespace Api
             new InlineKeyboardButton[]
             {
                 MenuGenerator.GetInlineButton(new InlineCallback<CustomCalendarCommand>("<", PRTelegramBotCommand.ChangeTo, new CustomCalendarCommand(date.AddMonths(-1),userId, command))),
-                MenuGenerator.GetInlineButton(new InlineCallback<CustomCalendarCommand>("↻", PRTelegramBotCommand.ChangeTo, new CustomCalendarCommand(date,userId, command))),
+                // кнопка обновить
+                //MenuGenerator.GetInlineButton(new InlineCallback<CustomCalendarCommand>("↻", PRTelegramBotCommand.ChangeTo, new CustomCalendarCommand(date,userId, command))),
+                MenuGenerator.GetInlineButton(new InlineCallback<CustomCalendarCommand>("Скачать", PRTelegramBotCommand.ChangeTo, new CustomCalendarCommand(date,userId, command))),
                 MenuGenerator.GetInlineButton(new InlineCallback<CustomCalendarCommand>(">", PRTelegramBotCommand.ChangeTo, new CustomCalendarCommand (date.AddMonths(1), userId, command))),
             };
 

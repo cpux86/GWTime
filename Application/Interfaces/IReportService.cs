@@ -21,7 +21,7 @@ namespace Application.Interfaces
         /// <returns></returns>
         public Task<List<User>> GetUsersAsync(DateTime startDate, DateTime endDate);
         public Task<List<Event>> TrackingByUserIdAndDateAsync(int userId, DateTime dateTime);
-        public Task<Event> GetLastUseKey(int userId);
+        //public Task<Event> GetLastUseKey(int userId);
 
         public Task<List<DateTime>> GetWorkingDaysByUserId(int userId, DateTime startDate);
         //public Task<List<DateOnly>> GetWorkingDaysByUserId(int userId, DateTime startDate);

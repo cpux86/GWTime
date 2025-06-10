@@ -4,7 +4,6 @@ using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.JavaScript;
 using System.Text;
-using Api.Models;
 using Application.DTOs;
 using Application.Interfaces;
 using Domain;
@@ -26,34 +25,6 @@ namespace Api.Controllers
         {
             _reportService = reportService;
         }
-
-
-        [HttpGet]
-        [Route("/")]
-        public async Task GetEvetn()
-        {
-            var ps = Process.Start("EventLoggerClientApp.exe", " /host 10.65.68.210");
-            var info = ps.StartInfo.Arguments;
-
-            //Task.Delay(10000).Wait();
-            //ps.Close();
-        }
-
-
-
-        //[HttpGet]
-        //[Route("users")]
-        //public async Task<List<User>> GetUserListAsync()
-        //{
-        //    return await _eventsService.GetUserListAsync();
-        //}
-
-        //[HttpGet]
-        //[Route("users/{name}")]
-        //public async Task<List<User>> GetUserByNameAsync(string name)
-        //{
-        //    return await _reportService.GetUserByNameAsync(name);
-        //}
 
 
         [HttpGet]

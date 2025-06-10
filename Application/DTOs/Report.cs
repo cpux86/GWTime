@@ -23,23 +23,28 @@ namespace Application.DTOs
 
     }
 
-    public class Group : IComparable
+
+    public class Group : IComparable<Group>
     {
         public string Name { get; set; } = string.Empty;
 
         [JsonPropertyName("users")]
         public List<Worker> Workers { get; set; } = new List<Worker>();
 
-        public int CompareTo(object? obj)
+
+        public int CompareTo(Group? other)
         {
-            if (obj is Group gp) return string.Compare(gp.Name, Name, StringComparison.Ordinal);
-            throw new ArgumentException("Некорректное значение параметра");
+            //if (other is Group gp) return string.Compare(gp.Name, Name, StringComparison.Ordinal);
+            //throw new ArgumentException("Некорректное значение параметра");
+            if (other == null)
+                throw new ArgumentNullException(nameof(other), "Сравниваемый объект не может быть null");
+            return string.Compare(Name, other.Name, StringComparison.Ordinal);
         }
     }
 
     public class Worker 
     {
-        private TimeSpan _total => TimeSpan.FromHours(WorkTimes.Sum(e => e.Total.TotalHours));
+        private TimeSpan _total => TimeSpan.FromHours(WorkTimes.Sum(e => e.TotalDuration.TotalHours));
         
         public string Name { get; set; } = string.Empty;
         public string FullName { get; set; } = string.Empty;
@@ -78,11 +83,14 @@ namespace Application.DTOs
         [JsonPropertyName("reader_out")]
         public string LastReader { get; set; }
 
+        // Общее время работы
         [JsonIgnore]
-        public TimeSpan Total => (ExitTime - EntryTime);
+        public TimeSpan TotalDuration => (ExitTime - EntryTime);
 
         [JsonPropertyName("time")]
-        public string Tot => $"{(int)Total.TotalHours:00}:{Total.Minutes:00}";
+        public string Tot => $"{(int)TotalDuration.TotalHours:00}:{TotalDuration.Minutes:00}:{TotalDuration.Seconds:00}";
+        //public string Tot => $"{TotalDuration.TotalHours:F0}:{TotalDuration.Minutes:D2}";
+
 
         public WorkTime(DateTime dt1, DateTime dt2)
         {

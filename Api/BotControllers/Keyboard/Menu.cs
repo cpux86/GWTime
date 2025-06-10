@@ -19,10 +19,8 @@ namespace Api.BotControllers.Keyboard
             {
                 new KeyboardButton("👷‍♂️Кто на работе"),
                 new KeyboardButton("Отчет"),
-                new KeyboardButton("🟢 Online"),
                 new KeyboardButton("🛠 Настройка"),
                 new KeyboardButton("Трекинг"),
-                new KeyboardButton("commands")
             };
 
             var menu = MenuGenerator.ReplyKeyboard(2, menuList, true);
@@ -33,18 +31,6 @@ namespace Api.BotControllers.Keyboard
             };
             return option;
         }
-
-
-        //private static List<KeyboardButton> SettingsKeyboard => new()
-        //{
-        //    new KeyboardButton("Мои люди"),
-        //    //new KeyboardButton("Другой"),
-
-        //    //new KeyboardButton("По сотруднику"),
-        //    //new KeyboardButton("По группе"),
-        //    //new KeyboardButton("По всем"),
-        //};
-
 
         public static OptionMessage SettingsKeyboard()
         {
@@ -84,14 +70,9 @@ namespace Api.BotControllers.Keyboard
             });
 
             option.MenuInlineKeyboardMarkup = menu;
-
-            //option.MenuReplyKeyboardMarkup = MenuGenerator.ReplyKeyboard(1, menu, true, "Назад");
             
             return option;
         }
-
-
-
         private static List<KeyboardButton> PeriodMenu => new()
         {
             new KeyboardButton("Сегодня"),
@@ -101,36 +82,6 @@ namespace Api.BotControllers.Keyboard
             new KeyboardButton("Текущий месяц"),
             new KeyboardButton("Предыдущий месяц"),
         };
-
-        ///// <summary>
-        ///// Клавиатура краткого отчета
-        ///// </summary>
-        ///// <returns></returns>
-        //public static OptionMessage QuickReportKeyboard()
-        //{
-        //    var periodMenu = PeriodMenu;
-        //    var option = new OptionMessage();
-        //    periodMenu.Add(new KeyboardButton("ПОДРОБНЫЙ ОТЧЕТ"));
-        //    var menu = MenuGenerator.ReplyKeyboard(2, periodMenu, true, "Главное меню");
-
-        //    option.MenuReplyKeyboardMarkup = menu;
-        //    return option;
-        //}
-
-        ///// <summary>
-        ///// Клавиатура подробного отчета
-        ///// </summary>
-        ///// <returns></returns>
-        //public static OptionMessage DetailsReportKeyboard()
-        //{
-        //    var periodMenu = PeriodMenu;
-        //    var option = new OptionMessage();
-        //    periodMenu.Add(new KeyboardButton("КРАТКИЙ ОТЧЕТ"));
-        //    var menu = MenuGenerator.ReplyKeyboard(2, periodMenu, true, "Главное меню");
-
-        //    option.MenuReplyKeyboardMarkup = menu;
-        //    return option;
-        //}
 
         internal static OptionMessage ReportKeyboard(ReportType type)
         {

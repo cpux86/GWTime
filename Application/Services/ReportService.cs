@@ -10,7 +10,6 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Application.DTOs;
-using Application.Features.Tacking;
 using Application.Interfaces;
 using Domain;
 using Microsoft.EntityFrameworkCore;
@@ -28,40 +27,7 @@ namespace Application.Services
         {
             _dbContext = dbContext;
         }
-
-
-
         // TimeSheet - учет рабочего время
-
-
-        /// <summary>
-        /// Первое и последнее использование ключа
-        /// </summary>
-        /// <param name="userId"></param>
-        /// <param name="startDate"></param>
-        /// <param name="endDate"></param>
-        /// <param name="inputReader"></param>
-        /// <returns></returns>
-        public async Task<List<Event>> GetFirstAndLastUseKey(int userId, DateTime startDate, DateTime endDate)
-        {
-            var sw = new Stopwatch();
-            sw.Start();
-            var start = DateTime.Parse("2023-10-16 00:00:00.0000000");
-            var end = DateTime.Now;
-            var events = await _dbContext.Events
-                .AsNoTracking()
-                .Where(e => e.Code == 2)
-                .Where(e => e.DateTime >= start && e.DateTime <= end)
-
-                .Where(e => e.UserId == 2954)
-                .Where(e => e.ReaderId == 79 || e.UserId == 80)
-                .Select(e => new { e.DateTime, e.UserId, e.User.Name })
-                .OrderByDescending(e => e.UserId).ThenByDescending(e => e.DateTime)
-                .OrderBy(e => e.UserId).ThenBy(e => e.DateTime)
-                .ToListAsync(CancellationToken.None);
-            var t = sw.ElapsedMilliseconds;
-            return new List<Event>();
-        }
 
         /// <summary>
         /// Список сотрудников за сегодня
@@ -116,41 +82,19 @@ namespace Application.Services
         }
 
 
-        // последнее 
-        public async Task<Event> GetLastUseKey(int userId)
+        public async Task<Report> GetReportByReaders(DateTime startDate, DateTime endDate, List<int> entryReaderIds, List<int> exitReaderIds, int messageId = 2)
         {
 
-            var t = await _dbContext.Events
-                .AsNoTracking()
-                .Where(e => e.User.Id == userId)
-                .Include(e => e.User)
-                .Include(e => e.Reader)
-                .OrderByDescending(e => e.DateTime)
-                .FirstOrDefaultAsync(CancellationToken.None);
-                //.FirstOrDefaultAsync(CancellationToken.None) ?? throw new Exception();
-
-            return t;
-        }
-
-        public async Task<Report> GetReportByReaders(DateTime startDate, DateTime endDate, List<int> inputReader, List<int> outputReader, int messageId = 2)
-        {
-
-            //inputReader.AddRange(outputReader);
-
-            Stopwatch stopwatch = new Stopwatch();
-            //засекаем время начала операции
-            stopwatch.Start();
             var usersList = await _dbContext.Users
                 .AsNoTracking()
                 .Include(e => e.Group)
                 .Include(u => u.Events!
                     .Where(e => e.DateTime >= startDate && e.DateTime <= endDate)
                     .Where(e => e.Code == messageId)
-                    .Where(e => inputReader.Contains(e.ReaderId) || outputReader.Contains(e.ReaderId))
+                    //.Where(e => e.UserId == 491)
+                    .Where(e => entryReaderIds.Contains(e.ReaderId) || exitReaderIds.Contains(e.ReaderId))
                     .OrderBy(e => e.DateTime)).ThenInclude(e => e.Reader)
                 .ToListAsync(CancellationToken.None);
-
-            stopwatch.Stop();
 
 
             var report = new Report
@@ -172,10 +116,18 @@ namespace Application.Services
                 worker.FullName = user.FullName;
                 worker.Name = user.Name;
 
+
                 var prev = new Event();
                 foreach (var evt in user.Events)
                 {
-                    if (inputReader.Exists(x => x == prev.ReaderId) && outputReader.Exists(x => x == evt.ReaderId))
+
+
+                    //if (prev.ReaderId == evt.ReaderId)
+                    //{
+                    //    continue;
+                    //}
+
+                    if (entryReaderIds.Exists(x => x == prev.ReaderId) && exitReaderIds.Exists(x => x == evt.ReaderId))
                     {
 
                         var v = new WorkTime(prev.DateTime, evt.DateTime)
@@ -183,34 +135,132 @@ namespace Application.Services
                             FirstReader = prev.Reader.Name,
                             LastReader = evt.Reader.Name
                         };
-                        if (v.Total < TimeSpan.FromMinutes(5))
-                        {
-                            Console.WriteLine($"ID {prev.Id} USR ID {evt.UserId} {evt.User.Name} {prev.DateTime} - {evt.DateTime} {v.Tot}");
-                        }
-
+                                        
                         worker.WorkTimes.Add(v);
                         worker.ContractInfo = "Т/Д";
                     }
+
                     prev = evt;
                 }
-                
+
                 report.Workers.Add(worker);
 
             }
 
             var users = report.Workers.OrderBy(e => e.FullName)
-                .ThenBy(e => e.Group)
-                .ToList<Worker>();
+               .ThenBy(e => e.Group)
+               .ToList<Worker>();
             var groups = users.GroupBy(e => e.Group!.Name)
                 .Select(e => new Group { Name = e.Key, Workers = e.ToList<Worker>() })
                 .OrderBy(e => e.Name)
                 .ToList();
 
             report.Groups = groups;
-            
+
             return report;
 
         }
+
+
+
+        //public async Task<Report> GetReportByReaders(DateTime startDate, DateTime endDate, List<int> inputReader, List<int> outputReader, int messageId = 2)
+        //{
+        //    // Используем HashSet для быстрого поиска (O(1) вместо O(n) в List)
+        //    var inputReaderSet = new HashSet<int>(inputReader);
+        //    var outputReaderSet = new HashSet<int>(outputReader);
+
+        //    var usersList = await _dbContext.Users
+        //        .AsNoTracking()
+        //        .Where(u => u.Events.Any(e =>
+        //            e.DateTime >= startDate && e.DateTime <= endDate &&
+        //            e.Code == messageId &&
+        //            (inputReaderSet.Contains(e.ReaderId) || outputReaderSet.Contains(e.ReaderId))))
+        //        .Select(u => new
+        //        {
+        //            u.FullName,
+        //            u.Name,
+        //            GroupName = u.Group.Name,
+        //            Events = u.Events
+        //                .Where(e => e.DateTime >= startDate && e.DateTime <= endDate &&
+        //                            e.Code == messageId &&
+        //                            (inputReaderSet.Contains(e.ReaderId) || outputReaderSet.Contains(e.ReaderId)))
+        //                .OrderBy(e => e.DateTime)
+        //                .Select(e => new
+        //                {
+        //                    e.Id,
+        //                    e.DateTime,
+        //                    e.ReaderId,
+        //                    ReaderName = e.Reader.Name,
+        //                    e.UserId
+        //                })
+        //                .ToList()
+        //        })
+        //        .ToListAsync();
+
+        //    var report = new Report
+        //    {
+        //        Start = startDate,
+        //        End = endDate
+        //    };
+
+        //    foreach (var user in usersList)
+        //    {
+        //        if (user.Events.Count == 0) continue;
+
+        //        var worker = new Worker
+        //        {
+        //            FullName = user.FullName,
+        //            Name = user.Name,
+        //            Group = new Group { Name = user.GroupName }
+        //        };
+
+        //        var prev = user.Events.First();
+
+        //        foreach (var evt in user.Events.Skip(1))
+        //        {
+        //            if (prev.ReaderId == evt.ReaderId) continue;
+
+        //            if (inputReaderSet.Contains(prev.ReaderId) && outputReaderSet.Contains(evt.ReaderId))
+        //            {
+        //                var workTime = new WorkTime(prev.DateTime, evt.DateTime)
+        //                {
+        //                    FirstReader = prev.ReaderName,
+        //                    LastReader = evt.ReaderName
+        //                };
+
+        //                if (workTime.Total < TimeSpan.FromMinutes(5))
+        //                {
+        //                    Console.WriteLine($"ID {prev.Id} USR ID {evt.UserId} {user.Name} {prev.DateTime} - {evt.DateTime} {workTime.Total}");
+        //                }
+
+        //                worker.WorkTimes.Add(workTime);
+        //                worker.ContractInfo = "Т/Д";
+        //            }
+        //            prev = evt;
+        //        }
+
+        //        if (worker.WorkTimes.Count > 0)
+        //        {
+        //            report.Workers.Add(worker);
+        //        }
+        //    }
+
+        //    report.Workers = report.Workers
+        //        .OrderBy(w => w.FullName)
+        //        .ThenBy(w => w.Group.Name)
+        //        .ToList();
+
+        //    report.Groups = report.Workers
+        //        .GroupBy(w => w.Group.Name)
+        //        .Select(g => new Group { Name = g.Key, Workers = g.ToList() })
+        //        .OrderBy(g => g.Name)
+        //        .ToList();
+
+        //    return report;
+        //}
+
+
+
         /// <summary>
         /// Возвращает список сотрудников прошедших регистрацию в системе за определенный период 
         /// </summary>

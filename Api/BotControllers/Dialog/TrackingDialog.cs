@@ -230,40 +230,15 @@ namespace Api.BotControllers.Dialog
                 {
 
                     var data = command.Data.Date;
-                    //var eventsTest = await _reportService.TrackingByUserIdAndDateAsync(command.Data.UserId, data);
-                    //var handler = update.GetStepHandler<StepTelegram>();
-                    //update.GetCacheData<TrackingCache>();
-
-
-
-                    //if (handler == null)
-                    //{
-                    //    await Tracking(botClient, update);
-                    //    return;
-                    //}
-
-                    //var cache = handler!.GetCache<TrackingCache>();
-
-
-
 
                     var workingDays = await _reportService.GetWorkingDaysByUserId(command.Data.UserId, command.Data.Date);
 
-                    //var calendarMarkup = CalendarMarkup.Calendar(DateTime.Today, dtfi, workingDays, command.Data.UserId, command.Data.LastCommand);
                     var calendarMarkup = CalendarMarkup.Calendar(command.Data.Date, dtfi, workingDays, command.Data.UserId, command.Data.LastCommand);
                     var option = new OptionMessage
                     {
                         MenuInlineKeyboardMarkup = calendarMarkup
                     };
 
-                    //handler!.GetCache<TrackingCache>().Options = option;
-
-
-                    //if (cache.UserId == 0)
-                    //{
-                    //    await Tracking(botClient, update);
-                    //    return;
-                    //}
 
                     //Обработка данных даты;
                     //var events = await _reportService.TrackingByUserIdAndDateAsync(cache.UserId, data);

@@ -19,7 +19,7 @@ using Update = Telegram.Bot.Types.Update;
 using GWT;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
-
+Console.WriteLine($"Running on .NET version: {System.Environment.Version}");
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
